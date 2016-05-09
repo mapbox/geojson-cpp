@@ -4,12 +4,6 @@
 #include <mapbox/variant.hpp>
 #include <rapidjson/document.h>
 
-#include <algorithm>
-#include <cmath>
-#include <cstdint>
-#include <iostream>
-#include <vector>
-
 namespace mapbox {
 namespace geojson {
 
