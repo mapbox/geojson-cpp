@@ -92,6 +92,18 @@ static void testMultiPolygon() {
     assert(polygons[0][0][0] == polygons[0][0][4]);
 }
 
+static void testGeometryCollection() {
+    const auto &data = readGeoJSON("test/fixtures/geometry-collection.json");
+    assert(data.is<geometry>());
+
+    const auto &geom = data.get<geometry>();
+    assert(geom.is<geometry_collection>());
+
+    const auto &collection = geom.get<geometry_collection>();
+    assert(collection[0].is<point>());
+    assert(collection[1].is<line_string>());
+}
+
 int main() {
     testPoint();
     testMultiPoint();
@@ -99,5 +111,6 @@ int main() {
     testMultiLineString();
     testPolygon();
     testMultiPolygon();
+    testGeometryCollection();
     return 0;
 }
