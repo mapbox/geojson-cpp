@@ -7,8 +7,6 @@
 namespace mapbox {
 namespace geojson {
 
-struct empty {};
-
 using value = mapbox::geometry::value;
 using point = mapbox::geometry::point<double>;
 using multi_point = mapbox::geometry::multi_point<double>;
@@ -22,7 +20,7 @@ using geometry_collection = mapbox::geometry::geometry_collection<double>;
 using feature = mapbox::geometry::feature<double>;
 using feature_collection = mapbox::geometry::feature_collection<double>;
 
-using geojson = mapbox::util::variant<empty, geometry, feature, feature_collection>;
+using geojson = mapbox::util::variant<geometry, feature, feature_collection>;
 
 using json_value = rapidjson::Value;
 using error = std::runtime_error;
