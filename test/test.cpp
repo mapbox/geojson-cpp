@@ -104,6 +104,24 @@ static void testGeometryCollection() {
     assert(collection[1].is<line_string>());
 }
 
+static void testFeature() {
+    const auto &data = readGeoJSON("test/fixtures/feature.json");
+    assert(data.is<feature>());
+
+    const auto &f = data.get<feature>();
+    assert(f.geometry.is<point>());
+
+    assert(f.properties.at("bool") == true);
+    assert(f.properties.at("string") == "foo");
+    assert(f.properties.at("double") == 2.5);
+    assert(f.properties.at("uint") == 10);
+    assert(f.properties.at("int") == -10);
+
+    // not implemented
+    assert(f.properties.at("null") == false);
+    assert(f.properties.at("nested") == false);
+}
+
 int main() {
     testPoint();
     testMultiPoint();
@@ -112,5 +130,6 @@ int main() {
     testPolygon();
     testMultiPolygon();
     testGeometryCollection();
+    testFeature();
     return 0;
 }

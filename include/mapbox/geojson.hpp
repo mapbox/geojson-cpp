@@ -9,6 +9,7 @@ namespace geojson {
 
 struct empty {};
 
+using value = mapbox::geometry::value;
 using point = mapbox::geometry::point<double>;
 using multi_point = mapbox::geometry::multi_point<double>;
 using line_string = mapbox::geometry::line_string<double>;
@@ -96,6 +97,25 @@ geometry convert<geometry>(const json_value &json) {
 }
 
 template <>
+value convert<value>(const json_value &json) {
+    if (json.IsBool())
+        return value{ json.GetBool() };
+    if (json.IsDouble())
+        return value{ json.GetDouble() };
+    if (json.IsUint())
+        return value{ json.GetUint() };
+    if (json.IsInt())
+        return value{ json.GetInt() };
+    if (json.IsString())
+        return value{ json.GetString() };
+
+    // TODO json.IsArray()
+    // TODO json.IsObject()
+    // TODO json.IsNull()
+    return false;
+}
+
+template <>
 feature convert<feature>(const json_value &json) {
     if (!json.IsObject())
         throw error("Feature must be an object");
@@ -111,9 +131,16 @@ feature convert<feature>(const json_value &json) {
     if (!json_geometry.IsObject())
         throw error("Feature geometry must be an object");
 
+    if (!json.HasMember("properties"))
+        throw error("Feature must have a properties property");
+
     feature feature{ convert<geometry>(json_geometry) };
 
-    // TODO feature properties
+    const auto &json_props = json["properties"];
+
+    for (auto itr = json_props.MemberBegin(); itr != json_props.MemberEnd(); ++itr) {
+        feature.properties[itr->name.GetString()] = convert<value>(itr->value);
+    }
 
     return feature;
 }
