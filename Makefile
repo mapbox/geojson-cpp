@@ -4,7 +4,7 @@ export MASON_DIR = $(shell pwd)/.mason
 export MASON = $(MASON_DIR)/mason
 
 VARIANT = variant 1.1.0
-GEOMETRY = geometry 0.3.0
+GEOMETRY = geometry 0.4.0
 RAPIDJSON = rapidjson 1.0.2
 
 DEPS = `$(MASON) cflags $(VARIANT)` `$(MASON) cflags $(GEOMETRY)`

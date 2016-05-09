@@ -75,7 +75,24 @@ geometry convert<geometry>(const json_value &json) {
 }
 
 template <>
+value convert<value>(const json_value &json);
+
+template <>
+std::unordered_map<std::string, value> convert(const json_value &json) {
+    if (!json.IsObject())
+        throw error("properties must be an object");
+
+    std::unordered_map<std::string, value> result;
+    for (auto itr = json.MemberBegin(); itr != json.MemberEnd(); ++itr) {
+        result[itr->name.GetString()] = convert<value>(itr->value);
+    }
+    return result;
+}
+
+template <>
 value convert<value>(const json_value &json) {
+    if (json.IsNull())
+        return value{ nullptr };
     if (json.IsBool())
         return value{ json.GetBool() };
     if (json.IsDouble())
@@ -86,11 +103,11 @@ value convert<value>(const json_value &json) {
         return value{  std::int64_t(json.GetInt()) };
     if (json.IsString())
         return value{ std::string(json.GetString()) };
-
-    // TODO json.IsArray()
-    // TODO json.IsObject()
-    // TODO json.IsNull()
-    return false;
+    if (json.IsArray())
+        return value{ convert<std::vector<value>>(json) };
+    if (json.IsObject())
+        return value{ convert<std::unordered_map<std::string, value>>(json) };
+    throw error("Unsupported GeoJSON property value type");
 }
 
 template <>
@@ -115,12 +132,8 @@ feature convert<feature>(const json_value &json) {
     feature feature{ convert<geometry>(json_geometry) };
 
     const auto &json_props = json["properties"];
-
-    if (json_props.IsNull())
-        return feature;
-
-    for (auto itr = json_props.MemberBegin(); itr != json_props.MemberEnd(); ++itr) {
-        feature.properties[itr->name.GetString()] = convert<value>(itr->value);
+    if (!json_props.IsNull()) {
+        feature.properties = convert<std::unordered_map<std::string, value>>(json_props);
     }
 
     return feature;
