@@ -42,8 +42,62 @@ static void testMultiPoint() {
     assert(points.size() == 2);
 }
 
+static void testLineString() {
+    const auto &data = readGeoJSON("test/fixtures/line-string.json");
+    assert(data.is<geometry>());
+
+    const auto &geom = data.get<geometry>();
+    assert(geom.is<line_string>());
+
+    const auto &points = geom.get<line_string>();
+    assert(points.size() == 2);
+}
+
+static void testMultiLineString() {
+    const auto &data = readGeoJSON("test/fixtures/multi-line-string.json");
+    assert(data.is<geometry>());
+
+    const auto &geom = data.get<geometry>();
+    assert(geom.is<multi_line_string>());
+
+    const auto &lines = geom.get<multi_line_string>();
+    assert(lines.size() == 1);
+    assert(lines[0].size() == 2);
+}
+
+static void testPolygon() {
+    const auto &data = readGeoJSON("test/fixtures/polygon.json");
+    assert(data.is<geometry>());
+
+    const auto &geom = data.get<geometry>();
+    assert(geom.is<polygon>());
+
+    const auto &rings = geom.get<polygon>();
+    assert(rings.size() == 1);
+    assert(rings[0].size() == 5);
+    assert(rings[0][0] == rings[0][4]);
+}
+
+static void testMultiPolygon() {
+    const auto &data = readGeoJSON("test/fixtures/multi-polygon.json");
+    assert(data.is<geometry>());
+
+    const auto &geom = data.get<geometry>();
+    assert(geom.is<multi_polygon>());
+
+    const auto &polygons = geom.get<multi_polygon>();
+    assert(polygons.size() == 1);
+    assert(polygons[0].size() == 1);
+    assert(polygons[0][0].size() == 5);
+    assert(polygons[0][0][0] == polygons[0][0][4]);
+}
+
 int main() {
     testPoint();
     testMultiPoint();
+    testLineString();
+    testMultiLineString();
+    testPolygon();
+    testMultiPolygon();
     return 0;
 }

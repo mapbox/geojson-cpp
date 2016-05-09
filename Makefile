@@ -20,7 +20,7 @@ mason_packages: $(MASON_DIR)
 	$(MASON) install $(GEOMETRY)
 	$(MASON) install $(RAPIDJSON)
 
-build/test: test/test.cpp include/mapbox/* mason_packages Makefile
+build/test: test/test.cpp test/fixtures/* include/mapbox/* mason_packages Makefile
 	mkdir -p build
 	$(CXX) test/test.cpp $(CFLAGS) $(DEPS) $(RAPIDJSON_DEP) -o build/test
 
