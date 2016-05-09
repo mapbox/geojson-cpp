@@ -1,8 +1,8 @@
-#include <mapbox/geometry.hpp>
 #include <rapidjson/document.h>
 #include <rapidjson/filereadstream.h>
 
 #include <mapbox/geojson.hpp>
+#include <mapbox/geometry.hpp>
 
 #include <cassert>
 #include <cstdio>
@@ -17,17 +17,7 @@ int main() {
     rapidjson::Document d;
     d.ParseStream(is);
 
-    const auto &json_features = d["features"];
-
-    mapbox::geometry::feature_collection<double> features;
-    features.reserve(json_features.Size());
-
-    for (auto itr = json_features.Begin(); itr != json_features.End(); ++itr) {
-        const auto &json_coords = (*itr)["geometry"]["coordinates"];
-        const auto lng = json_coords[0].GetDouble();
-        const auto lat = json_coords[1].GetDouble();
-        mapbox::geometry::point<double> point(lng, lat);
-        mapbox::geometry::feature<double> feature{ point };
-        features.push_back(feature);
-    }
+    const auto &data = mapbox::geojson::convert(d);
+    assert(data.is<mapbox::geometry::feature_collection<double>>());
+    return 0;
 }

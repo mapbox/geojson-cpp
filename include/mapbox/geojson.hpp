@@ -25,7 +25,7 @@ using geojson_feature_collection = mapbox::geometry::feature_collection<double>;
 using geojson = mapbox::util::
     variant<geojson_empty, geojson_geometry, geojson_feature, geojson_feature_collection>;
 
-using json_value = rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator>;
+using json_value = rapidjson::Value;
 using error = std::runtime_error;
 
 geojson_point convertPoint(const json_value &json) {
@@ -33,7 +33,8 @@ geojson_point convertPoint(const json_value &json) {
     return geojson_point{ json[0].GetDouble(), json[1].GetDouble() };
 }
 
-template <typename T> geojson_geometry convertPoints(const json_value &json) {
+template <typename T>
+geojson_geometry convertPoints(const json_value &json) {
     T points;
     auto size = json.Size();
     points.reserve(size);
@@ -90,7 +91,7 @@ geojson_feature convertFeature(const json_value &json) {
 
     const auto &json_geometry = json["geometry"];
 
-    if (!json_geometry.IsArray()) throw error("Feature geometry must be an array");
+    if (!json_geometry.IsObject()) throw error("Feature geometry must be an object");
 
     const auto &geometry = convertGeometry(json_geometry);
 
