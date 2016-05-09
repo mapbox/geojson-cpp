@@ -138,6 +138,9 @@ feature convert<feature>(const json_value &json) {
 
     const auto &json_props = json["properties"];
 
+    if (json_props.IsNull())
+        return feature;
+
     for (auto itr = json_props.MemberBegin(); itr != json_props.MemberEnd(); ++itr) {
         feature.properties[itr->name.GetString()] = convert<value>(itr->value);
     }

@@ -122,6 +122,14 @@ static void testFeature() {
     assert(f.properties.at("nested") == false);
 }
 
+static void testFeatureCollection() {
+    const auto &data = readGeoJSON("test/fixtures/feature-collection.json");
+    assert(data.is<feature_collection>());
+
+    const auto &features = data.get<feature_collection>();
+    assert(features.size() == 2);
+}
+
 int main() {
     testPoint();
     testMultiPoint();
@@ -131,5 +139,6 @@ int main() {
     testMultiPolygon();
     testGeometryCollection();
     testFeature();
+    testFeatureCollection();
     return 0;
 }
