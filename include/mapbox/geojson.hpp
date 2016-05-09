@@ -100,11 +100,11 @@ value convert<value>(const json_value &json) {
     if (json.IsDouble())
         return value{ json.GetDouble() };
     if (json.IsUint())
-        return value{ json.GetUint() };
+        return value{ std::uint64_t(json.GetUint()) };
     if (json.IsInt())
-        return value{ json.GetInt() };
+        return value{  std::int64_t(json.GetInt()) };
     if (json.IsString())
-        return value{ json.GetString() };
+        return value{ std::string(json.GetString()) };
 
     // TODO json.IsArray()
     // TODO json.IsObject()

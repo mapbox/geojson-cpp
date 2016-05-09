@@ -111,11 +111,16 @@ static void testFeature() {
     const auto &f = data.get<feature>();
     assert(f.geometry.is<point>());
 
+    assert(f.properties.at("bool").is<bool>());
     assert(f.properties.at("bool") == true);
-    assert(f.properties.at("string") == "foo");
+    assert(f.properties.at("string").is<std::string>());
+    assert(f.properties.at("string").get<std::string>() == "foo");
     assert(f.properties.at("double") == 2.5);
-    assert(f.properties.at("uint") == 10);
-    assert(f.properties.at("int") == -10);
+    assert(f.properties.at("double").is<double>());
+    assert(f.properties.at("uint").get<std::uint64_t>() == 10);
+    assert(f.properties.at("uint").is<std::uint64_t>());
+    assert(f.properties.at("int").get<std::int64_t>() == -10);
+    assert(f.properties.at("int").is<std::int64_t>());
 
     // not implemented
     assert(f.properties.at("null") == false);
