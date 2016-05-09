@@ -45,8 +45,7 @@ Cont convert(const json_value &json) {
     points.reserve(size);
 
     for (rapidjson::SizeType i = 0; i < size; ++i) {
-        const auto &p = convert<typename Cont::value_type>(json[i]);
-        points.push_back(p);
+        points.push_back(convert<typename Cont::value_type>(json[i]));
     }
     return points;
 }
@@ -172,8 +171,7 @@ geojson convert<geojson>(const json_value &json) {
         collection.reserve(size);
 
         for (rapidjson::SizeType i = 0; i < size; ++i) {
-            const auto &f = convert<feature>(json_features[i]);
-            collection.push_back(f);
+            collection.push_back(convert<feature>(json_features[i]));
         }
 
         return geojson{ collection };
