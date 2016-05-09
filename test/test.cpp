@@ -17,7 +17,7 @@ int main() {
     rapidjson::Document d;
     d.ParseStream(is);
 
-    const auto &data = mapbox::geojson::convert<mapbox::geojson::geojson>(d);
+    const auto &data = mapbox::geojson::convert(d);
     assert(data.is<mapbox::geometry::feature_collection<double>>());
     return 0;
 }

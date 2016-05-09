@@ -34,53 +34,23 @@ using error = std::runtime_error;
 template <typename T>
 T convert(const json_value &json);
 
-template <typename Cont, typename Val>
-Cont convertPoints(const json_value &json) {
-    Cont points;
-    auto size = json.Size();
-    points.reserve(size);
-
-    for (rapidjson::SizeType i = 0; i < size; ++i) {
-        const auto &p = convert<Val>(json[i]);
-        points.push_back(p);
-    }
-    return points;
-}
-
 template<>
 point convert<point>(const json_value &json) {
     if (json.Size() < 2) throw error("coordinates array must have at least 2 numbers");
     return point{ json[0].GetDouble(), json[1].GetDouble() };
 }
 
-template<>
-multi_point convert<multi_point>(const json_value &json) {
-    return convertPoints<multi_point, point>(json);
-}
+template <typename Cont>
+Cont convert(const json_value &json) {
+    Cont points;
+    auto size = json.Size();
+    points.reserve(size);
 
-template<>
-line_string convert<line_string>(const json_value &json) {
-    return convertPoints<line_string, point>(json);
-}
-
-template<>
-linear_ring convert<linear_ring>(const json_value &json) {
-    return convertPoints<linear_ring, point>(json);
-}
-
-template<>
-multi_line_string convert<multi_line_string>(const json_value &json) {
-    return convertPoints<multi_line_string, line_string>(json);
-}
-
-template<>
-polygon convert<polygon>(const json_value &json) {
-    return convertPoints<polygon, linear_ring>(json);
-}
-
-template<>
-multi_polygon convert<multi_polygon>(const json_value &json) {
-    return convertPoints<multi_polygon, polygon>(json);
+    for (rapidjson::SizeType i = 0; i < size; ++i) {
+        const auto &p = convert<typename Cont::value_type>(json[i]);
+        points.push_back(p);
+    }
+    return points;
 }
 
 template<>
@@ -179,6 +149,10 @@ geojson convert<geojson>(const json_value &json) {
     }
 
     throw error(std::string(type.GetString()) + " not yet implemented");
+}
+
+geojson convert(const json_value &json) {
+    return convert<geojson>(json);
 }
 
 } // namespace geojson
