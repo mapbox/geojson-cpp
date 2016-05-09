@@ -7,7 +7,8 @@ VARIANT = variant 1.1.0
 GEOMETRY = geometry 0.3.0
 RAPIDJSON = rapidjson 1.0.2
 
-DEPS = `$(MASON) cflags $(VARIANT)` `$(MASON) cflags $(GEOMETRY)` `$(MASON) cflags $(RAPIDJSON)`
+DEPS = `$(MASON) cflags $(VARIANT)` `$(MASON) cflags $(GEOMETRY)`
+RAPIDJSON_DEP = `$(MASON) cflags $(RAPIDJSON)`
 
 default:
 	make run-test
@@ -20,9 +21,17 @@ mason_packages: $(MASON_DIR)
 	$(MASON) install $(GEOMETRY)
 	$(MASON) install $(RAPIDJSON)
 
-build/test: test/test.cpp test/fixtures/* include/mapbox/* mason_packages Makefile
+build:
 	mkdir -p build
-	$(CXX) test/test.cpp $(CFLAGS) $(DEPS) $(RAPIDJSON_DEP) -o build/test
+
+build/geojson.o: src/mapbox/geojson.cpp include/mapbox/geojson.hpp build mason_packages Makefile
+	$(CXX) $(CFLAGS) $(DEPS) $(RAPIDJSON_DEP) -c $< -o $@
+
+build/libgeojson.a: build/geojson.o
+	$(AR) -rcs $@ $<
+
+build/test: test/test.cpp test/fixtures/* build/libgeojson.a
+	$(CXX) $(CFLAGS) $(DEPS) $< -Lbuild -lgeojson -o $@
 
 run-test: build/test
 	./build/test

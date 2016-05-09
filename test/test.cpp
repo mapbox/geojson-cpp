@@ -1,22 +1,17 @@
-#include <rapidjson/document.h>
-#include <rapidjson/filereadstream.h>
-
 #include <mapbox/geojson.hpp>
 #include <mapbox/geometry.hpp>
 
 #include <cassert>
-#include <cstdio>
-#include <iostream>
+#include <fstream>
+#include <sstream>
 
 using namespace mapbox::geojson;
 
 geojson readGeoJSON(const std::string &path) {
-    std::FILE *fp = std::fopen(path.c_str(), "r");
-    char buffer[65536];
-    rapidjson::FileReadStream is(fp, buffer, sizeof(buffer));
-    rapidjson::Document d;
-    d.ParseStream(is);
-    return convert(d);
+    std::ifstream t(path.c_str());
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+    return parse(buffer.str());
 }
 
 static void testPoint() {
