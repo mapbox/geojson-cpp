@@ -21,6 +21,7 @@ using line_string = mapbox::geometry::line_string<double>;
 using linear_ring = mapbox::geometry::linear_ring<double>;
 using multi_line_string = mapbox::geometry::multi_line_string<double>;
 using polygon = mapbox::geometry::polygon<double>;
+using multi_polygon = mapbox::geometry::multi_polygon<double>;
 using geometry = mapbox::geometry::geometry<double>;
 using feature = mapbox::geometry::feature<double>;
 using feature_collection = mapbox::geometry::feature_collection<double>;
@@ -33,7 +34,8 @@ using error = std::runtime_error;
 template <typename T>
 struct part {};
 
-template <typename Cont, typename Val> Cont convertPoints(const json_value &json) {
+template <typename Cont, typename Val>
+Cont convertPoints(const json_value &json) {
     Cont points;
     auto size = json.Size();
     points.reserve(size);
@@ -52,39 +54,41 @@ struct part<point> {
         return point{ json[0].GetDouble(), json[1].GetDouble() };
     }
 };
-
-template<>
+template <>
 struct part<multi_point> {
     inline static multi_point convert(const json_value &json) {
         return convertPoints<multi_point, point>(json);
     }
 };
-
-template<>
+template <>
 struct part<line_string> {
     inline static line_string convert(const json_value &json) {
         return convertPoints<line_string, point>(json);
     }
 };
-
-template<>
+template <>
 struct part<linear_ring> {
     inline static linear_ring convert(const json_value &json) {
         return convertPoints<linear_ring, point>(json);
     }
 };
-
-template<>
+template <>
 struct part<multi_line_string> {
     inline static multi_line_string convert(const json_value &json) {
         return convertPoints<multi_line_string, line_string>(json);
     }
 };
-
-template<>
+template <>
 struct part<polygon> {
     inline static polygon convert(const json_value &json) {
         return convertPoints<polygon, linear_ring>(json);
+    }
+};
+
+template <>
+struct part<multi_polygon> {
+    inline static multi_polygon convert(const json_value &json) {
+        return convertPoints<multi_polygon, polygon>(json);
     }
 };
 
@@ -116,16 +120,19 @@ geometry convertGeometry(const json_value &json) {
         return geometry{ part<point>::convert(json_coords) };
     }
     if (type == "MultiPoint") {
-        return geometry { part<multi_point>::convert(json_coords) };
+        return geometry{ part<multi_point>::convert(json_coords) };
     }
     if (type == "LineString") {
-        return geometry { part<line_string>::convert(json_coords) };
+        return geometry{ part<line_string>::convert(json_coords) };
     }
     if (type == "MultiLineString") {
-        return geometry { part<multi_line_string>::convert(json_coords) };
+        return geometry{ part<multi_line_string>::convert(json_coords) };
     }
     if (type == "Polygon") {
-        return geometry { part<polygon>::convert(json_coords) };
+        return geometry{ part<polygon>::convert(json_coords) };
+    }
+    if (type == "MultiPolygon") {
+        return geometry{ part<multi_polygon>::convert(json_coords) };
     }
 
     throw error(std::string(type.GetString()) + " not yet implemented");
