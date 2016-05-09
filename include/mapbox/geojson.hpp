@@ -18,7 +18,9 @@ struct empty {};
 using point = mapbox::geometry::point<double>;
 using multi_point = mapbox::geometry::multi_point<double>;
 using line_string = mapbox::geometry::line_string<double>;
+using linear_ring = mapbox::geometry::linear_ring<double>;
 using multi_line_string = mapbox::geometry::multi_line_string<double>;
+using polygon = mapbox::geometry::polygon<double>;
 using geometry = mapbox::geometry::geometry<double>;
 using feature = mapbox::geometry::feature<double>;
 using feature_collection = mapbox::geometry::feature_collection<double>;
@@ -66,9 +68,23 @@ struct part<line_string> {
 };
 
 template<>
+struct part<linear_ring> {
+    inline static linear_ring convert(const json_value &json) {
+        return convertPoints<linear_ring, point>(json);
+    }
+};
+
+template<>
 struct part<multi_line_string> {
     inline static multi_line_string convert(const json_value &json) {
         return convertPoints<multi_line_string, line_string>(json);
+    }
+};
+
+template<>
+struct part<polygon> {
+    inline static polygon convert(const json_value &json) {
+        return convertPoints<polygon, linear_ring>(json);
     }
 };
 
@@ -107,6 +123,9 @@ geometry convertGeometry(const json_value &json) {
     }
     if (type == "MultiLineString") {
         return geometry { part<multi_line_string>::convert(json_coords) };
+    }
+    if (type == "Polygon") {
+        return geometry { part<polygon>::convert(json_coords) };
     }
 
     throw error(std::string(type.GetString()) + " not yet implemented");
