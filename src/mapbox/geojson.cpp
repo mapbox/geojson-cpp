@@ -91,23 +91,27 @@ std::unordered_map<std::string, value> convert(const json_value &json) {
 
 template <>
 value convert<value>(const json_value &json) {
-    if (json.IsNull())
-        return value{ nullptr };
-    if (json.IsBool())
-        return value{ json.GetBool() };
-    if (json.IsDouble())
-        return value{ json.GetDouble() };
-    if (json.IsUint())
-        return value{ std::uint64_t(json.GetUint()) };
-    if (json.IsInt())
-        return value{  std::int64_t(json.GetInt()) };
-    if (json.IsString())
-        return value{ std::string(json.GetString()) };
-    if (json.IsArray())
-        return value{ convert<std::vector<value>>(json) };
-    if (json.IsObject())
-        return value{ convert<std::unordered_map<std::string, value>>(json) };
-    throw error("Unsupported GeoJSON property value type");
+    switch (json.GetType()) {
+    case rapidjson::kNullType:
+        return nullptr;
+    case rapidjson::kFalseType:
+        return false;
+    case rapidjson::kTrueType:
+        return true;
+    case rapidjson::kObjectType:
+        return convert<std::unordered_map<std::string, value>>(json);
+    case rapidjson::kArrayType:
+        return convert<std::vector<value>>(json);
+    case rapidjson::kStringType:
+        return std::string(json.GetString(), json.GetStringLength());
+    default:
+        assert(json.GetType() == rapidjson::kNumberType);
+        if (json.IsUint64())
+            return std::uint64_t(json.GetUint64());
+        if (json.IsInt64())
+            return std::int64_t(json.GetInt64());
+        return json.GetDouble();
+    }
 }
 
 template <>
