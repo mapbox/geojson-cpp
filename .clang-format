@@ -3,8 +3,8 @@ IndentWidth: 4
 AccessModifierOffset: -4
 UseTab: Never
 BinPackParameters: false
-AllowShortIfStatementsOnASingleLine: true
-AllowShortLoopsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
 AllowShortBlocksOnASingleLine: false
 AllowShortFunctionsOnASingleLine: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: true

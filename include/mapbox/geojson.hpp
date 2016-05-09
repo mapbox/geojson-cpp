@@ -31,7 +31,9 @@ T convert(const json_value &json);
 
 template <>
 point convert<point>(const json_value &json) {
-    if (json.Size() < 2) throw error("coordinates array must have at least 2 numbers");
+    if (json.Size() < 2)
+        throw error("coordinates array must have at least 2 numbers");
+
     return point{ json[0].GetDouble(), json[1].GetDouble() };
 }
 
@@ -50,8 +52,11 @@ Cont convert(const json_value &json) {
 
 template <>
 geometry convert<geometry>(const json_value &json) {
-    if (!json.IsObject()) throw error("Geometry must be an object");
-    if (!json.HasMember("type")) throw error("Geometry must have a type property");
+    if (!json.IsObject())
+        throw error("Geometry must be an object");
+
+    if (!json.HasMember("type"))
+        throw error("Geometry must have a type property");
 
     const auto &type = json["type"];
 
@@ -71,28 +76,40 @@ geometry convert<geometry>(const json_value &json) {
         throw error(std::string(type.GetString()) + " geometry must have a coordinates property");
 
     const auto &json_coords = json["coordinates"];
-    if (!json_coords.IsArray()) throw error("coordinates property must be an array");
+    if (!json_coords.IsArray())
+        throw error("coordinates property must be an array");
 
-    if (type == "Point") return geometry{ convert<point>(json_coords) };
-    if (type == "MultiPoint") return geometry{ convert<multi_point>(json_coords) };
-    if (type == "LineString") return geometry{ convert<line_string>(json_coords) };
-    if (type == "MultiLineString") return geometry{ convert<multi_line_string>(json_coords) };
-    if (type == "Polygon") return geometry{ convert<polygon>(json_coords) };
-    if (type == "MultiPolygon") return geometry{ convert<multi_polygon>(json_coords) };
+    if (type == "Point")
+        return geometry{ convert<point>(json_coords) };
+    if (type == "MultiPoint")
+        return geometry{ convert<multi_point>(json_coords) };
+    if (type == "LineString")
+        return geometry{ convert<line_string>(json_coords) };
+    if (type == "MultiLineString")
+        return geometry{ convert<multi_line_string>(json_coords) };
+    if (type == "Polygon")
+        return geometry{ convert<polygon>(json_coords) };
+    if (type == "MultiPolygon")
+        return geometry{ convert<multi_polygon>(json_coords) };
 
     throw error(std::string(type.GetString()) + " not yet implemented");
 }
 
 template <>
 feature convert<feature>(const json_value &json) {
-    if (!json.IsObject()) throw error("Feature must be an object");
-    if (!json.HasMember("type")) throw error("Feature must have a type property");
-    if (json["type"] != "Feature") throw error("Feature type must be Feature");
-    if (!json.HasMember("geometry")) throw error("Feature must have a geometry property");
+    if (!json.IsObject())
+        throw error("Feature must be an object");
+    if (!json.HasMember("type"))
+        throw error("Feature must have a type property");
+    if (json["type"] != "Feature")
+        throw error("Feature type must be Feature");
+    if (!json.HasMember("geometry"))
+        throw error("Feature must have a geometry property");
 
     const auto &json_geometry = json["geometry"];
 
-    if (!json_geometry.IsObject()) throw error("Feature geometry must be an object");
+    if (!json_geometry.IsObject())
+        throw error("Feature geometry must be an object");
 
     feature feature{ convert<geometry>(json_geometry) };
 
@@ -103,8 +120,10 @@ feature convert<feature>(const json_value &json) {
 
 template <>
 geojson convert<geojson>(const json_value &json) {
-    if (!json.IsObject()) throw error("GeoJSON must be an object");
-    if (!json.HasMember("type")) throw error("GeoJSON must have a type property");
+    if (!json.IsObject())
+        throw error("GeoJSON must be an object");
+    if (!json.HasMember("type"))
+        throw error("GeoJSON must have a type property");
 
     const auto &type = json["type"];
 
@@ -130,7 +149,8 @@ geojson convert<geojson>(const json_value &json) {
         return geojson{ collection };
     }
 
-    if (type == "Feature") return geojson{ convert<feature>(json) };
+    if (type == "Feature")
+        return geojson{ convert<feature>(json) };
 
     return geojson{ convert<geometry>(json) };
 }
