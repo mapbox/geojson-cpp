@@ -19,10 +19,14 @@ using geometry_collection = mapbox::geometry::geometry_collection<double>;
 using feature             = mapbox::geometry::feature<double>;
 using feature_collection  = mapbox::geometry::feature_collection<double>;
 
-using geojson = mapbox::util::variant<geometry, feature, feature_collection>;
-
 using error = std::runtime_error;
 
+// Parse inputs of known types. Instantiations are provided for geometry, feature, and feature_collection.
+template <class T>
+T parse(const std::string &);
+
+// Parse any GeoJSON type.
+using geojson = mapbox::util::variant<geometry, feature, feature_collection>;
 geojson parse(const std::string &);
 
 } // namespace geojson

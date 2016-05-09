@@ -162,10 +162,19 @@ geojson convert<geojson>(const json_value &json) {
     return geojson{ convert<geometry>(json) };
 }
 
-geojson parse(const std::string &json) {
+template <class T>
+T parse(const std::string &json) {
     rapidjson::Document d;
     d.Parse(json.c_str());
-    return convert<geojson>(d);
+    return convert<T>(d);
+}
+
+template <> geometry parse<geometry>(const std::string &);
+template <> feature parse<feature>(const std::string &);
+template <> feature_collection parse<feature_collection>(const std::string &);
+
+geojson parse(const std::string &json) {
+    return parse<geojson>(json);
 }
 
 }
