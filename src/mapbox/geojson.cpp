@@ -84,7 +84,7 @@ std::unordered_map<std::string, value> convert(const json_value &json) {
 
     std::unordered_map<std::string, value> result;
     for (auto itr = json.MemberBegin(); itr != json.MemberEnd(); ++itr) {
-        result[itr->name.GetString()] = convert<value>(itr->value);
+        result.emplace(itr->name.GetString(), convert<value>(itr->value));
     }
     return result;
 }
