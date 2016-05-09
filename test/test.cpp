@@ -7,17 +7,43 @@
 #include <cassert>
 #include <cstdio>
 #include <iostream>
-#include <vector>
 
-int main() {
-    std::FILE *fp = std::fopen("test/fixtures/places.json", "r");
+using namespace mapbox::geojson;
+
+geojson readGeoJSON(const std::string &path) {
+    std::FILE *fp = std::fopen(path.c_str(), "r");
     char buffer[65536];
     rapidjson::FileReadStream is(fp, buffer, sizeof(buffer));
-
     rapidjson::Document d;
     d.ParseStream(is);
+    return convert(d);
+}
 
-    const auto &data = mapbox::geojson::convert(d);
-    assert(data.is<mapbox::geometry::feature_collection<double>>());
+static void testPoint() {
+    const auto &data = readGeoJSON("test/fixtures/point.json");
+    assert(data.is<geometry>());
+
+    const auto &geom = data.get<geometry>();
+    assert(geom.is<point>());
+
+    const auto &p = geom.get<point>();
+    assert(p.x == 30.5);
+    assert(p.y == 50.5);
+}
+
+static void testMultiPoint() {
+    const auto &data = readGeoJSON("test/fixtures/multi-point.json");
+    assert(data.is<geometry>());
+
+    const auto &geom = data.get<geometry>();
+    assert(geom.is<multi_point>());
+
+    const auto &points = geom.get<multi_point>();
+    assert(points.size() == 2);
+}
+
+int main() {
+    testPoint();
+    testMultiPoint();
     return 0;
 }
