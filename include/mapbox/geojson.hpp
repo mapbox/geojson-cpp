@@ -32,7 +32,7 @@ using json_value = rapidjson::Value;
 using error = std::runtime_error;
 
 template <typename T>
-struct part {};
+T convert(const json_value &json);
 
 template <typename Cont, typename Val>
 Cont convertPoints(const json_value &json) {
@@ -41,58 +41,50 @@ Cont convertPoints(const json_value &json) {
     points.reserve(size);
 
     for (rapidjson::SizeType i = 0; i < size; ++i) {
-        const auto &p = part<Val>::convert(json[i]);
+        const auto &p = convert<Val>(json[i]);
         points.push_back(p);
     }
     return points;
 }
 
-template <>
-struct part<point> {
-    inline static point convert(const json_value &json) {
-        if (json.Size() < 2) throw error("coordinates array must have at least 2 numbers");
-        return point{ json[0].GetDouble(), json[1].GetDouble() };
-    }
-};
-template <>
-struct part<multi_point> {
-    inline static multi_point convert(const json_value &json) {
-        return convertPoints<multi_point, point>(json);
-    }
-};
-template <>
-struct part<line_string> {
-    inline static line_string convert(const json_value &json) {
-        return convertPoints<line_string, point>(json);
-    }
-};
-template <>
-struct part<linear_ring> {
-    inline static linear_ring convert(const json_value &json) {
-        return convertPoints<linear_ring, point>(json);
-    }
-};
-template <>
-struct part<multi_line_string> {
-    inline static multi_line_string convert(const json_value &json) {
-        return convertPoints<multi_line_string, line_string>(json);
-    }
-};
-template <>
-struct part<polygon> {
-    inline static polygon convert(const json_value &json) {
-        return convertPoints<polygon, linear_ring>(json);
-    }
-};
+template<>
+point convert<point>(const json_value &json) {
+    if (json.Size() < 2) throw error("coordinates array must have at least 2 numbers");
+    return point{ json[0].GetDouble(), json[1].GetDouble() };
+}
 
-template <>
-struct part<multi_polygon> {
-    inline static multi_polygon convert(const json_value &json) {
-        return convertPoints<multi_polygon, polygon>(json);
-    }
-};
+template<>
+multi_point convert<multi_point>(const json_value &json) {
+    return convertPoints<multi_point, point>(json);
+}
 
-geometry convertGeometry(const json_value &json) {
+template<>
+line_string convert<line_string>(const json_value &json) {
+    return convertPoints<line_string, point>(json);
+}
+
+template<>
+linear_ring convert<linear_ring>(const json_value &json) {
+    return convertPoints<linear_ring, point>(json);
+}
+
+template<>
+multi_line_string convert<multi_line_string>(const json_value &json) {
+    return convertPoints<multi_line_string, line_string>(json);
+}
+
+template<>
+polygon convert<polygon>(const json_value &json) {
+    return convertPoints<polygon, linear_ring>(json);
+}
+
+template<>
+multi_polygon convert<multi_polygon>(const json_value &json) {
+    return convertPoints<multi_polygon, polygon>(json);
+}
+
+template<>
+geometry convert<geometry>(const json_value &json) {
     if (!json.IsObject()) throw error("Geometry must be an object");
     if (!json.HasMember("type")) throw error("Geometry must have a type property");
 
@@ -117,28 +109,29 @@ geometry convertGeometry(const json_value &json) {
     if (!json_coords.IsArray()) throw error("coordinates property must be an array");
 
     if (type == "Point") {
-        return geometry{ part<point>::convert(json_coords) };
+        return geometry{ convert<point>(json_coords) };
     }
     if (type == "MultiPoint") {
-        return geometry{ part<multi_point>::convert(json_coords) };
+        return geometry{ convert<multi_point>(json_coords) };
     }
     if (type == "LineString") {
-        return geometry{ part<line_string>::convert(json_coords) };
+        return geometry{ convert<line_string>(json_coords) };
     }
     if (type == "MultiLineString") {
-        return geometry{ part<multi_line_string>::convert(json_coords) };
+        return geometry{ convert<multi_line_string>(json_coords) };
     }
     if (type == "Polygon") {
-        return geometry{ part<polygon>::convert(json_coords) };
+        return geometry{ convert<polygon>(json_coords) };
     }
     if (type == "MultiPolygon") {
-        return geometry{ part<multi_polygon>::convert(json_coords) };
+        return geometry{ convert<multi_polygon>(json_coords) };
     }
 
     throw error(std::string(type.GetString()) + " not yet implemented");
 }
 
-feature convertFeature(const json_value &json) {
+template<>
+feature convert<feature>(const json_value &json) {
     if (!json.IsObject()) throw error("Feature must be an object");
     if (!json.HasMember("type")) throw error("Feature must have a type property");
     if (json["type"] != "Feature") throw error("Feature type must be Feature");
@@ -148,15 +141,16 @@ feature convertFeature(const json_value &json) {
 
     if (!json_geometry.IsObject()) throw error("Feature geometry must be an object");
 
-    const auto &geometry = convertGeometry(json_geometry);
+    const auto &geom = convert<geometry>(json_geometry);
 
-    feature feature{ geometry };
+    feature feature{ geom };
     // TODO feature properties
 
     return feature;
 }
 
-geojson convert(const json_value &json) {
+template<>
+geojson convert<geojson>(const json_value &json) {
     if (!json.IsObject()) throw error("GeoJSON must be an object");
     if (!json.HasMember("type")) throw error("GeoJSON must have a type property");
 
@@ -177,8 +171,8 @@ geojson convert(const json_value &json) {
         collection.reserve(size);
 
         for (rapidjson::SizeType i = 0; i < size; ++i) {
-            const auto &feature = convertFeature(json_features[i]);
-            collection.push_back(feature);
+            const auto &f = convert<feature>(json_features[i]);
+            collection.push_back(f);
         }
 
         return geojson{ collection };
