@@ -13,37 +13,64 @@
 namespace mapbox {
 namespace geojson {
 
-struct geojson_empty {};
+struct empty {};
 
-using line_string = mapbox::geometry::line_string<double>;
-using multi_point = mapbox::geometry::multi_point<double>;
 using point = mapbox::geometry::point<double>;
+using multi_point = mapbox::geometry::multi_point<double>;
+using line_string = mapbox::geometry::line_string<double>;
+using multi_line_string = mapbox::geometry::multi_line_string<double>;
 using geometry = mapbox::geometry::geometry<double>;
 using feature = mapbox::geometry::feature<double>;
 using feature_collection = mapbox::geometry::feature_collection<double>;
 
-using geojson = mapbox::util::variant<geojson_empty, geometry, feature, feature_collection>;
+using geojson = mapbox::util::variant<empty, geometry, feature, feature_collection>;
 
 using json_value = rapidjson::Value;
 using error = std::runtime_error;
 
-point convertPoint(const json_value &json) {
-    if (json.Size() < 2) throw error("coordinates array must have at least 2 numbers");
-    return point{ json[0].GetDouble(), json[1].GetDouble() };
-}
-
 template <typename T>
-geometry convertPoints(const json_value &json) {
-    T points;
+struct part {};
+
+template <typename Cont, typename Val> Cont convertPoints(const json_value &json) {
+    Cont points;
     auto size = json.Size();
     points.reserve(size);
 
     for (rapidjson::SizeType i = 0; i < size; ++i) {
-        const auto &p = convertPoint(json);
+        const auto &p = part<Val>::convert(json[i]);
         points.push_back(p);
     }
-    return geometry{ points };
+    return points;
 }
+
+template <>
+struct part<point> {
+    inline static point convert(const json_value &json) {
+        if (json.Size() < 2) throw error("coordinates array must have at least 2 numbers");
+        return point{ json[0].GetDouble(), json[1].GetDouble() };
+    }
+};
+
+template<>
+struct part<multi_point> {
+    inline static multi_point convert(const json_value &json) {
+        return convertPoints<multi_point, point>(json);
+    }
+};
+
+template<>
+struct part<line_string> {
+    inline static line_string convert(const json_value &json) {
+        return convertPoints<line_string, point>(json);
+    }
+};
+
+template<>
+struct part<multi_line_string> {
+    inline static multi_line_string convert(const json_value &json) {
+        return convertPoints<multi_line_string, line_string>(json);
+    }
+};
 
 geometry convertGeometry(const json_value &json) {
     if (!json.IsObject()) throw error("Geometry must be an object");
@@ -70,13 +97,16 @@ geometry convertGeometry(const json_value &json) {
     if (!json_coords.IsArray()) throw error("coordinates property must be an array");
 
     if (type == "Point") {
-        return geometry{ convertPoint(json_coords) };
+        return geometry{ part<point>::convert(json_coords) };
     }
     if (type == "MultiPoint") {
-        return convertPoints<multi_point>(json_coords);
+        return geometry { part<multi_point>::convert(json_coords) };
     }
     if (type == "LineString") {
-        return convertPoints<line_string>(json_coords);
+        return geometry { part<line_string>::convert(json_coords) };
+    }
+    if (type == "MultiLineString") {
+        return geometry { part<multi_line_string>::convert(json_coords) };
     }
 
     throw error(std::string(type.GetString()) + " not yet implemented");
