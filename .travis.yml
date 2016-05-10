@@ -19,4 +19,4 @@ matrix:
 cache: apt
 
 script:
- - make run-test
+ - make test

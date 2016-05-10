@@ -8,8 +8,7 @@ RAPIDJSON = rapidjson 1.0.2
 DEPS = `$(MASON) cflags $(VARIANT)` `$(MASON) cflags $(GEOMETRY)`
 RAPIDJSON_DEP = `$(MASON) cflags $(RAPIDJSON)`
 
-default:
-	make run-test
+default: build/libgeojson.a
 
 mason_packages:
 	git submodule update --init .mason
@@ -29,7 +28,7 @@ build/libgeojson.a: build/geojson.o
 build/test: test/test.cpp test/fixtures/* build/libgeojson.a
 	$(CXX) $(CFLAGS) $(DEPS) $< -Lbuild -lgeojson -o $@
 
-run-test: build/test
+test: build/test
 	./build/test
 
 format:
