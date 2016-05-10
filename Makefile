@@ -1,4 +1,4 @@
-CFLAGS += -I include --std=c++14 -Wall -Wextra -Werror -O3
+CFLAGS += -I include --std=c++14 -Wall -Wextra -Werror -O3 -fPIC
 
 export MASON_DIR = $(shell pwd)/.mason
 export MASON = $(MASON_DIR)/mason
