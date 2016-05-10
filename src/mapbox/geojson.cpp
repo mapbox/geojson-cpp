@@ -34,16 +34,20 @@ geometry convert<geometry>(const json_value &json) {
     if (!json.IsObject())
         throw error("Geometry must be an object");
 
-    if (!json.HasMember("type"))
+    const auto &json_end = json.MemberEnd();
+
+    const auto &type_itr = json.FindMember("type");
+    if (type_itr == json_end)
         throw error("Geometry must have a type property");
 
-    const auto &type = json["type"];
+    const auto &type = type_itr->value;
 
     if (type == "GeometryCollection") {
-        if (!json.HasMember("geometries"))
+        const auto &geometries_itr = json.FindMember("geometries");
+        if (geometries_itr == json_end)
             throw error("GeometryCollection must have a geometries property");
 
-        const auto &json_geometries = json["geometries"];
+        const auto &json_geometries = geometries_itr->value;
 
         if (!json_geometries.IsArray())
             throw error("GeometryCollection geometries property must be an array");
@@ -51,10 +55,12 @@ geometry convert<geometry>(const json_value &json) {
         return geometry{ convert<geometry_collection>(json_geometries) };
     }
 
-    if (!json.HasMember("coordinates"))
+    const auto &coords_itr = json.FindMember("coordinates");
+
+    if (coords_itr == json_end)
         throw error(std::string(type.GetString()) + " geometry must have a coordinates property");
 
-    const auto &json_coords = json["coordinates"];
+    const auto &json_coords = coords_itr->value;
     if (!json_coords.IsArray())
         throw error("coordinates property must be an array");
 
@@ -118,24 +124,28 @@ template <>
 feature convert<feature>(const json_value &json) {
     if (!json.IsObject())
         throw error("Feature must be an object");
-    if (!json.HasMember("type"))
+
+    auto const &json_end = json.MemberEnd();
+    auto const &type_itr = json.FindMember("type");
+
+    if (type_itr == json_end)
         throw error("Feature must have a type property");
-    if (json["type"] != "Feature")
+    if (type_itr->value != "Feature")
         throw error("Feature type must be Feature");
-    if (!json.HasMember("geometry"))
+
+    auto const &geom_itr = json.FindMember("geometry");
+
+    if (geom_itr == json_end)
         throw error("Feature must have a geometry property");
 
-    const auto &json_geometry = json["geometry"];
+    feature feature{ convert<geometry>(geom_itr->value) };
 
-    if (!json_geometry.IsObject())
-        throw error("Feature geometry must be an object");
+    auto const &prop_itr = json.FindMember("properties");
 
-    if (!json.HasMember("properties"))
+    if (prop_itr == json_end)
         throw error("Feature must have a properties property");
 
-    feature feature{ convert<geometry>(json_geometry) };
-
-    const auto &json_props = json["properties"];
+    const auto &json_props = prop_itr->value;
     if (!json_props.IsNull()) {
         feature.properties = convert<std::unordered_map<std::string, value>>(json_props);
     }
@@ -147,16 +157,21 @@ template <>
 geojson convert<geojson>(const json_value &json) {
     if (!json.IsObject())
         throw error("GeoJSON must be an object");
-    if (!json.HasMember("type"))
+
+    const auto &type_itr = json.FindMember("type");
+    const auto &json_end = json.MemberEnd();
+
+    if (type_itr == json_end)
         throw error("GeoJSON must have a type property");
 
-    const auto &type = json["type"];
+    const auto &type = type_itr->value;
 
     if (type == "FeatureCollection") {
-        if (!json.HasMember("features"))
+        const auto &features_itr = json.FindMember("features");
+        if (features_itr == json_end)
             throw error("FeatureCollection must have features property");
 
-        const auto &json_features = json["features"];
+        const auto &json_features = features_itr->value;
 
         if (!json_features.IsArray())
             throw error("FeatureCollection features property must be an array");
