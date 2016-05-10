@@ -9,6 +9,9 @@ namespace geojson {
 using json_document = rapidjson::GenericDocument<rapidjson::UTF8<>, rapidjson::CrtAllocator>;
 using json_value    = rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator>;
 
+using error    = std::runtime_error;
+using prop_map = std::unordered_map<std::string, value>;
+
 template <typename T>
 T convert(const json_value &json);
 
@@ -87,11 +90,11 @@ template <>
 value convert<value>(const json_value &json);
 
 template <>
-std::unordered_map<std::string, value> convert(const json_value &json) {
+prop_map convert(const json_value &json) {
     if (!json.IsObject())
         throw error("properties must be an object");
 
-    std::unordered_map<std::string, value> result;
+    prop_map result;
     for (auto itr = json.MemberBegin(); itr != json.MemberEnd(); ++itr) {
         result.emplace(std::string(itr->name.GetString(), itr->name.GetStringLength()),
                        convert<value>(itr->value));
@@ -109,7 +112,7 @@ value convert<value>(const json_value &json) {
     case rapidjson::kTrueType:
         return true;
     case rapidjson::kObjectType:
-        return convert<std::unordered_map<std::string, value>>(json);
+        return convert<prop_map>(json);
     case rapidjson::kArrayType:
         return convert<std::vector<value>>(json);
     case rapidjson::kStringType:
@@ -151,7 +154,7 @@ feature convert<feature>(const json_value &json) {
 
     const auto &json_props = prop_itr->value;
     if (!json_props.IsNull()) {
-        feature.properties = convert<std::unordered_map<std::string, value>>(json_props);
+        feature.properties = convert<prop_map>(json_props);
     }
 
     return feature;
