@@ -26,9 +26,13 @@ using error = std::runtime_error;
 template <class T>
 T parse(const std::string &);
 
+template <class T>
+T parse(std::FILE *);
+
 // Parse any GeoJSON type.
 using geojson = mapbox::util::variant<geometry, feature, feature_collection>;
 geojson parse(const std::string &);
+geojson parse(std::FILE *);
 
 } // namespace geojson
 } // namespace mapbox

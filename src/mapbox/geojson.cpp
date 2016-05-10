@@ -1,5 +1,6 @@
 #include <mapbox/geojson.hpp>
 #include <rapidjson/document.h>
+#include <rapidjson/filereadstream.h>
 
 namespace mapbox {
 namespace geojson {
@@ -211,6 +212,27 @@ feature_collection parse<feature_collection>(const std::string &);
 geojson parse(const std::string &json) {
     return parse<geojson>(json);
 }
+
+template <class T>
+T parse(std::FILE *fp) {
+    char buffer[65536];
+    rapidjson::FileReadStream is(fp, buffer, sizeof(buffer));
+    rapidjson::Document d;
+    d.ParseStream(is);
+    return convert<T>(d);
+}
+
+template <>
+geometry parse<geometry>(std::FILE *);
+template <>
+feature parse<feature>(std::FILE *);
+template <>
+feature_collection parse<feature_collection>(std::FILE *);
+
+geojson parse(std::FILE *fp) {
+    return parse<geojson>(fp);
+}
+
 
 } // namespace geojson
 } // namespace mapbox
