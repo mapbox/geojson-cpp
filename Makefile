@@ -1,4 +1,4 @@
-CFLAGS += -I include --std=c++14 -Wall -Wextra -Werror -O3 -fPIC
+CFLAGS += -I include -std=c++14 -Wall -Wextra -Werror -O3 -fPIC
 
 MASON ?= .mason/mason
 VARIANT = variant 1.1.0
