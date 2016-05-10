@@ -7,7 +7,7 @@ namespace geojson {
 // Use the CrtAllocator, because the MemoryPoolAllocator is broken on ARM
 // https://github.com/miloyip/rapidjson/issues/200, 301, 388
 using json_document = rapidjson::GenericDocument<rapidjson::UTF8<>, rapidjson::CrtAllocator>;
-using json_value = rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator>;
+using json_value    = rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator>;
 
 template <typename T>
 T convert(const json_value &json);
@@ -93,7 +93,8 @@ std::unordered_map<std::string, value> convert(const json_value &json) {
 
     std::unordered_map<std::string, value> result;
     for (auto itr = json.MemberBegin(); itr != json.MemberEnd(); ++itr) {
-        result.emplace(itr->name.GetString(), convert<value>(itr->value));
+        result.emplace(std::string(itr->name.GetString(), itr->name.GetStringLength()),
+                       convert<value>(itr->value));
     }
     return result;
 }
