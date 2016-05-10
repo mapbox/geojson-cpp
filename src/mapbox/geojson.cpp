@@ -4,7 +4,10 @@
 namespace mapbox {
 namespace geojson {
 
-using json_value = rapidjson::Value;
+// Use the CrtAllocator, because the MemoryPoolAllocator is broken on ARM
+// https://github.com/miloyip/rapidjson/issues/200, 301, 388
+using json_document = rapidjson::GenericDocument<rapidjson::UTF8<>, rapidjson::CrtAllocator>;
+using json_value = rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator>;
 
 template <typename T>
 T convert(const json_value &json);
@@ -196,7 +199,7 @@ geojson convert<geojson>(const json_value &json) {
 
 template <class T>
 T parse(const std::string &json) {
-    rapidjson::Document d;
+    json_document d;
     d.Parse(json.c_str());
     return convert<T>(d);
 }
