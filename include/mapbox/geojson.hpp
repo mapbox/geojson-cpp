@@ -21,7 +21,8 @@ using feature_collection  = mapbox::geometry::feature_collection<double>;
 
 using error = std::runtime_error;
 
-// Parse inputs of known types. Instantiations are provided for geometry, feature, and feature_collection.
+// Parse inputs of known types. Instantiations are provided for geometry, feature, and
+// feature_collection.
 template <class T>
 T parse(const std::string &);
 

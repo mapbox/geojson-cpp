@@ -37,7 +37,7 @@ run-test: build/test
 	./build/test
 
 format:
-	clang-format include/mapbox/*.hpp test/*.cpp -i
+	clang-format include/mapbox/*.hpp src/mapbox/geojson.cpp test/*.cpp -i
 
 clean:
 	rm -rf build

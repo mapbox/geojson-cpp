@@ -118,16 +118,19 @@ static void testFeature() {
     assert(f.properties.at("int").is<std::int64_t>());
     assert(f.properties.at("null").is<std::nullptr_t>());
     assert(f.properties.at("null") == nullptr);
+
+    using prop_map = std::unordered_map<std::string, value>;
+    using values   = std::vector<value>;
+
+    const auto &nested = f.properties.at("nested");
+
     // Explicit recursive_wrapper as a workaround for https://github.com/mapbox/variant/issues/102
-    assert(f.properties.at("nested").is<mapbox::util::recursive_wrapper<std::vector<value>>>());
-    assert(f.properties.at("nested").get<std::vector<value>>().at(0).is<std::uint64_t>());
-    assert(f.properties.at("nested").get<std::vector<value>>().at(0).get<std::uint64_t>() == 5);
-    assert((f.properties.at("nested").get<std::vector<value>>().at(1)
-        .is<mapbox::util::recursive_wrapper<std::unordered_map<std::string, value>>>()));
-    assert((f.properties.at("nested").get<std::vector<value>>().at(1)
-        .get<std::unordered_map<std::string, value>>().at("foo").is<std::string>()));
-    assert((f.properties.at("nested").get<std::vector<value>>().at(1)
-        .get<std::unordered_map<std::string, value>>().at("foo").get<std::string>() == "bar"));
+    assert(nested.is<mapbox::util::recursive_wrapper<values>>());
+    assert(nested.get<values>().at(0).is<std::uint64_t>());
+    assert(nested.get<values>().at(0).get<std::uint64_t>() == 5);
+    assert(nested.get<values>().at(1).is<mapbox::util::recursive_wrapper<prop_map>>());
+    assert(nested.get<values>().at(1).get<prop_map>().at("foo").is<std::string>());
+    assert(nested.get<values>().at(1).get<prop_map>().at("foo").get<std::string>() == "bar");
 }
 
 static void testFeatureCollection() {

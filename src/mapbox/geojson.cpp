@@ -186,13 +186,16 @@ T parse(const std::string &json) {
     return convert<T>(d);
 }
 
-template <> geometry parse<geometry>(const std::string &);
-template <> feature parse<feature>(const std::string &);
-template <> feature_collection parse<feature_collection>(const std::string &);
+template <>
+geometry parse<geometry>(const std::string &);
+template <>
+feature parse<feature>(const std::string &);
+template <>
+feature_collection parse<feature_collection>(const std::string &);
 
 geojson parse(const std::string &json) {
     return parse<geojson>(json);
 }
 
-}
-}
+} // namespace geojson
+} // namespace mapbox
