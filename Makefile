@@ -1,4 +1,4 @@
-CFLAGS += -I include -std=c++14 -Wall -Wextra -Werror -O3 -fPIC
+CXXFLAGS += -I include -std=c++14 -Wall -Wextra -Werror -O3 -fPIC
 
 MASON ?= .mason/mason
 VARIANT = variant 1.1.0
@@ -19,13 +19,13 @@ build:
 	mkdir -p build
 
 build/geojson.o: src/mapbox/geojson.cpp include/mapbox/geojson.hpp build mason_packages Makefile
-	$(CXX) $(CFLAGS) $(DEPS) $(RAPIDJSON_DEP) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(DEPS) $(RAPIDJSON_DEP) -c $< -o $@
 
 build/libgeojson.a: build/geojson.o
 	$(AR) -rcs $@ $<
 
 build/test: test/test.cpp test/fixtures/* build/libgeojson.a
-	$(CXX) $(CFLAGS) $(DEPS) $< -Lbuild -lgeojson -o $@
+	$(CXX) $(CXXFLAGS) $(DEPS) $< -Lbuild -lgeojson -o $@
 
 test: build/test
 	./build/test
