@@ -19,13 +19,13 @@ build:
 	mkdir -p build
 
 build/geojson.o: src/mapbox/geojson.cpp include/mapbox/geojson.hpp build mason_packages Makefile
-	$(CXX) $(CXXFLAGS) $(DEPS) $(RAPIDJSON_DEP) -c $< -o $@
+	$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEPS) $(RAPIDJSON_DEP) -c $< -o $@
 
 build/libgeojson.a: build/geojson.o
 	$(AR) -rcs $@ $<
 
 build/test: test/test.cpp test/fixtures/* build/libgeojson.a
-	$(CXX) $(CXXFLAGS) $(DEPS) $< -Lbuild -lgeojson -o $@
+	$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEPS) $< -Lbuild -lgeojson -o $@
 
 test: build/test
 	./build/test
