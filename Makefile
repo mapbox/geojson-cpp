@@ -10,7 +10,7 @@ RAPIDJSON_DEP = `$(MASON) cflags $(RAPIDJSON)`
 
 default: build/libgeojson.a
 
-mason_packages:
+mason_packages/headers/geometry:
 	$(MASON) install $(VARIANT)
 	$(MASON) install $(GEOMETRY)
 	$(MASON) install $(RAPIDJSON)
@@ -18,7 +18,7 @@ mason_packages:
 build:
 	mkdir -p build
 
-build/geojson.o: src/mapbox/geojson.cpp include/mapbox/geojson.hpp build mason_packages Makefile
+build/geojson.o: src/mapbox/geojson.cpp include/mapbox/geojson.hpp build mason_packages/headers/geometry Makefile
 	$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEPS) $(RAPIDJSON_DEP) -c $< -o $@
 
 build/libgeojson.a: build/geojson.o
