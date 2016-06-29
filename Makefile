@@ -25,7 +25,7 @@ build/libgeojson.a: build/geojson.o
 	$(AR) -rcs $@ $<
 
 build/test: test/test.cpp test/fixtures/* build/libgeojson.a
-	$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEPS) $< -Lbuild -lgeojson -o $@
+	$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEPS) $(RAPIDJSON_DEP) $< -Lbuild -lgeojson -o $@
 
 test: build/test
 	./build/test

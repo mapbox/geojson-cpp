@@ -1,22 +1,18 @@
 #include <mapbox/geojson.hpp>
+#include <mapbox/geojson/rapidjson.hpp>
 #include <rapidjson/document.h>
 
 namespace mapbox {
 namespace geojson {
 
-// Use the CrtAllocator, because the MemoryPoolAllocator is broken on ARM
-// https://github.com/miloyip/rapidjson/issues/200, 301, 388
-using json_document = rapidjson::GenericDocument<rapidjson::UTF8<>, rapidjson::CrtAllocator>;
-using json_value    = rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator>;
-
 using error    = std::runtime_error;
 using prop_map = std::unordered_map<std::string, value>;
 
 template <typename T>
-T convert(const json_value &json);
+T convert(const rapidjson_value &json);
 
 template <>
-point convert<point>(const json_value &json) {
+point convert<point>(const rapidjson_value &json) {
     if (json.Size() < 2)
         throw error("coordinates array must have at least 2 numbers");
 
@@ -24,7 +20,7 @@ point convert<point>(const json_value &json) {
 }
 
 template <typename Cont>
-Cont convert(const json_value &json) {
+Cont convert(const rapidjson_value &json) {
     Cont points;
     auto size = json.Size();
     points.reserve(size);
@@ -36,7 +32,7 @@ Cont convert(const json_value &json) {
 }
 
 template <>
-geometry convert<geometry>(const json_value &json) {
+geometry convert<geometry>(const rapidjson_value &json) {
     if (!json.IsObject())
         throw error("Geometry must be an object");
 
@@ -87,10 +83,10 @@ geometry convert<geometry>(const json_value &json) {
 }
 
 template <>
-value convert<value>(const json_value &json);
+value convert<value>(const rapidjson_value &json);
 
 template <>
-prop_map convert(const json_value &json) {
+prop_map convert(const rapidjson_value &json) {
     if (!json.IsObject())
         throw error("properties must be an object");
 
@@ -103,7 +99,7 @@ prop_map convert(const json_value &json) {
 }
 
 template <>
-value convert<value>(const json_value &json) {
+value convert<value>(const rapidjson_value &json) {
     switch (json.GetType()) {
     case rapidjson::kNullType:
         return nullptr;
@@ -128,7 +124,7 @@ value convert<value>(const json_value &json) {
 }
 
 template <>
-feature convert<feature>(const json_value &json) {
+feature convert<feature>(const rapidjson_value &json) {
     if (!json.IsObject())
         throw error("Feature must be an object");
 
@@ -161,7 +157,7 @@ feature convert<feature>(const json_value &json) {
 }
 
 template <>
-geojson convert<geojson>(const json_value &json) {
+geojson convert<geojson>(const rapidjson_value &json) {
     if (!json.IsObject())
         throw error("GeoJSON must be an object");
 
@@ -203,7 +199,7 @@ geojson convert<geojson>(const json_value &json) {
 
 template <class T>
 T parse(const std::string &json) {
-    json_document d;
+    rapidjson_document d;
     d.Parse(json.c_str());
     return convert<T>(d);
 }
@@ -217,6 +213,10 @@ feature_collection parse<feature_collection>(const std::string &);
 
 geojson parse(const std::string &json) {
     return parse<geojson>(json);
+}
+
+geojson convert(const rapidjson_value &json) {
+    return convert<geojson>(json);
 }
 
 } // namespace geojson

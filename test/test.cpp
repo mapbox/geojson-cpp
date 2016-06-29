@@ -1,4 +1,5 @@
 #include <mapbox/geojson.hpp>
+#include <mapbox/geojson/rapidjson.hpp>
 #include <mapbox/geometry.hpp>
 
 #include <cassert>
@@ -7,15 +8,21 @@
 
 using namespace mapbox::geojson;
 
-geojson readGeoJSON(const std::string &path) {
+geojson readGeoJSON(const std::string &path, bool use_convert) {
     std::ifstream t(path.c_str());
     std::stringstream buffer;
     buffer << t.rdbuf();
-    return parse(buffer.str());
+    if (use_convert) {
+        rapidjson_document d;
+        d.Parse<0>(buffer.str().c_str());
+        return convert(d);
+    } else {
+        return parse(buffer.str());
+    }
 }
 
-static void testPoint() {
-    const auto &data = readGeoJSON("test/fixtures/point.json");
+static void testPoint(bool use_convert) {
+    const auto &data = readGeoJSON("test/fixtures/point.json", use_convert);
     assert(data.is<geometry>());
 
     const auto &geom = data.get<geometry>();
@@ -26,8 +33,8 @@ static void testPoint() {
     assert(p.y == 50.5);
 }
 
-static void testMultiPoint() {
-    const auto &data = readGeoJSON("test/fixtures/multi-point.json");
+static void testMultiPoint(bool use_convert) {
+    const auto &data = readGeoJSON("test/fixtures/multi-point.json", use_convert);
     assert(data.is<geometry>());
 
     const auto &geom = data.get<geometry>();
@@ -37,8 +44,8 @@ static void testMultiPoint() {
     assert(points.size() == 2);
 }
 
-static void testLineString() {
-    const auto &data = readGeoJSON("test/fixtures/line-string.json");
+static void testLineString(bool use_convert) {
+    const auto &data = readGeoJSON("test/fixtures/line-string.json", use_convert);
     assert(data.is<geometry>());
 
     const auto &geom = data.get<geometry>();
@@ -48,8 +55,8 @@ static void testLineString() {
     assert(points.size() == 2);
 }
 
-static void testMultiLineString() {
-    const auto &data = readGeoJSON("test/fixtures/multi-line-string.json");
+static void testMultiLineString(bool use_convert) {
+    const auto &data = readGeoJSON("test/fixtures/multi-line-string.json", use_convert);
     assert(data.is<geometry>());
 
     const auto &geom = data.get<geometry>();
@@ -60,8 +67,8 @@ static void testMultiLineString() {
     assert(lines[0].size() == 2);
 }
 
-static void testPolygon() {
-    const auto &data = readGeoJSON("test/fixtures/polygon.json");
+static void testPolygon(bool use_convert) {
+    const auto &data = readGeoJSON("test/fixtures/polygon.json", use_convert);
     assert(data.is<geometry>());
 
     const auto &geom = data.get<geometry>();
@@ -73,8 +80,8 @@ static void testPolygon() {
     assert(rings[0][0] == rings[0][4]);
 }
 
-static void testMultiPolygon() {
-    const auto &data = readGeoJSON("test/fixtures/multi-polygon.json");
+static void testMultiPolygon(bool use_convert) {
+    const auto &data = readGeoJSON("test/fixtures/multi-polygon.json", use_convert);
     assert(data.is<geometry>());
 
     const auto &geom = data.get<geometry>();
@@ -87,8 +94,8 @@ static void testMultiPolygon() {
     assert(polygons[0][0][0] == polygons[0][0][4]);
 }
 
-static void testGeometryCollection() {
-    const auto &data = readGeoJSON("test/fixtures/geometry-collection.json");
+static void testGeometryCollection(bool use_convert) {
+    const auto &data = readGeoJSON("test/fixtures/geometry-collection.json", use_convert);
     assert(data.is<geometry>());
 
     const auto &geom = data.get<geometry>();
@@ -99,8 +106,8 @@ static void testGeometryCollection() {
     assert(collection[1].is<line_string>());
 }
 
-static void testFeature() {
-    const auto &data = readGeoJSON("test/fixtures/feature.json");
+static void testFeature(bool use_convert) {
+    const auto &data = readGeoJSON("test/fixtures/feature.json", use_convert);
     assert(data.is<feature>());
 
     const auto &f = data.get<feature>();
@@ -133,23 +140,29 @@ static void testFeature() {
     assert(nested.get<values>().at(1).get<prop_map>().at("foo").get<std::string>() == "bar");
 }
 
-static void testFeatureCollection() {
-    const auto &data = readGeoJSON("test/fixtures/feature-collection.json");
+static void testFeatureCollection(bool use_convert) {
+    const auto &data = readGeoJSON("test/fixtures/feature-collection.json", use_convert);
     assert(data.is<feature_collection>());
 
     const auto &features = data.get<feature_collection>();
     assert(features.size() == 2);
 }
 
+void testAll(bool use_convert) {
+    testPoint(use_convert);
+    testMultiPoint(use_convert);
+    testLineString(use_convert);
+    testMultiLineString(use_convert);
+    testPolygon(use_convert);
+    testMultiPolygon(use_convert);
+    testGeometryCollection(use_convert);
+    testFeature(use_convert);
+    testFeatureCollection(use_convert);
+}
+
 int main() {
-    testPoint();
-    testMultiPoint();
-    testLineString();
-    testMultiLineString();
-    testPolygon();
-    testMultiPolygon();
-    testGeometryCollection();
-    testFeature();
-    testFeatureCollection();
+    testAll(true);
+    testAll(false);
     return 0;
 }
+
