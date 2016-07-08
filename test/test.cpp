@@ -140,6 +140,15 @@ static void testFeature(bool use_convert) {
     assert(nested.get<values>().at(1).get<prop_map>().at("foo").get<std::string>() == "bar");
 }
 
+static void testFeatureNullProperties(bool use_convert) {
+    const auto &data = readGeoJSON("test/fixtures/feature-null-properties.json", use_convert);
+    assert(data.is<feature>());
+
+    const auto &f = data.get<feature>();
+    assert(f.geometry.is<point>());
+    assert(f.properties.size() == 0);
+}
+
 static void testFeatureCollection(bool use_convert) {
     const auto &data = readGeoJSON("test/fixtures/feature-collection.json", use_convert);
     assert(data.is<feature_collection>());
@@ -157,6 +166,7 @@ void testAll(bool use_convert) {
     testMultiPolygon(use_convert);
     testGeometryCollection(use_convert);
     testFeature(use_convert);
+    testFeatureNullProperties(use_convert);
     testFeatureCollection(use_convert);
 }
 
