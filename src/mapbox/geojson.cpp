@@ -1,6 +1,9 @@
 #include <mapbox/geojson.hpp>
 #include <mapbox/geojson/rapidjson.hpp>
+
 #include <rapidjson/document.h>
+#include <rapidjson/writer.h>
+#include <rapidjson/stringbuffer.h>
 
 namespace mapbox {
 namespace geojson {
@@ -217,6 +220,175 @@ geojson parse(const std::string &json) {
 
 geojson convert(const rapidjson_value &json) {
     return convert<geojson>(json);
+}
+
+using Writer = rapidjson::Writer<rapidjson::StringBuffer>;
+
+void write(const geometry&, Writer&);
+void write(const feature&, Writer&);
+void write(const feature_collection&, Writer&);
+
+struct to_type {
+public:
+    const char * operator()(const point&) {
+        return "Point";
+    }
+
+    const char * operator()(const line_string&) {
+        return "LineString";
+    }
+
+    const char * operator()(const polygon&) {
+        return "Polygon";
+    }
+
+    const char * operator()(const multi_point&) {
+        return "MultiPoint";
+    }
+
+    const char * operator()(const multi_line_string&) {
+        return "MultiLineString";
+    }
+
+    const char * operator()(const multi_polygon&) {
+        return "MultiPolygon";
+    }
+
+    const char * operator()(const geometry_collection&) {
+        return "GeometryCollection";
+    }
+};
+
+struct write_coordinates_or_geometries {
+    Writer& writer;
+
+    // Handles line_string, polygon, multi_point, multi_line_string, multi_polygon, and geometry_collection.
+    template <class E>
+    void operator()(const std::vector<E>& vector) {
+        writer.StartArray();
+        for (std::size_t i = 0; i < vector.size(); ++i) {
+            operator()(vector[i]);
+        }
+        writer.EndArray();
+    }
+
+    void operator()(const point& point) {
+        writer.StartArray();
+        writer.Double(point.x);
+        writer.Double(point.y);
+        writer.EndArray();
+    }
+
+    void operator()(const geometry& geometry) {
+        return write(geometry, writer);
+    }
+};
+
+struct write_value {
+    Writer& writer;
+
+    void operator()(null_value_t) {
+        writer.Null();
+    }
+
+    void operator()(bool t) {
+        writer.Bool(t);
+    }
+
+    void operator()(int64_t t) {
+        writer.Int64(t);
+    }
+
+    void operator()(uint64_t t) {
+        writer.Uint64(t);
+    }
+
+    void operator()(double t) {
+        writer.Double(t);
+    }
+
+    void operator()(const std::string& t) {
+        writer.String(t.data(), t.size());
+    }
+
+    void operator()(const std::vector<value>& array) {
+        writer.StartArray();
+        for (const auto& value : array) {
+            value::visit(value, *this);
+        }
+        writer.EndArray();
+    }
+
+    void operator()(const std::unordered_map<std::string, value>& map) {
+        writer.StartObject();
+        for (const auto& property : map) {
+            writer.Key(property.first.data(), property.first.size());
+            value::visit(property.second, write_value { writer });
+        }
+        writer.EndObject();
+    }
+};
+
+void write(const geometry& geometry, Writer& writer) {
+    writer.StartObject();
+
+    writer.Key("type");
+    writer.String(geometry::visit(geometry, to_type()));
+
+    writer.Key(geometry.is<geometry_collection>() ? "geometries" : "coordinates");
+    geometry::visit(geometry, write_coordinates_or_geometries { writer });
+
+    writer.EndObject();
+}
+
+void write(const feature& feature, Writer& writer) {
+    writer.StartObject();
+
+    writer.Key("type");
+    writer.String("Feature");
+
+    if (feature.id) {
+        writer.Key("id");
+        identifier::visit(*feature.id, write_value { writer });
+    }
+
+    writer.Key("geometry");
+    write(feature.geometry, writer);
+
+    writer.Key("properties");
+    write_value { writer }(feature.properties);
+
+    writer.EndObject();
+}
+
+void write(const feature_collection& feature_collection, Writer& writer) {
+    writer.StartObject();
+
+    writer.Key("type");
+    writer.String("FeatureCollection");
+
+    writer.Key("features");
+    writer.StartArray();
+    for (const auto& feature : feature_collection) {
+        write(feature, writer);
+    }
+    writer.EndArray();
+
+    writer.EndObject();
+}
+
+template <class T>
+std::string stringify(const T& t) {
+    rapidjson::StringBuffer s;
+    Writer writer(s);
+    write(t, writer);
+    return s.GetString();
+}
+
+std::string stringify(const geojson& geojson) {
+    return geojson::visit(geojson, [] (const auto& alternative) {
+        return stringify(alternative);
+    });
 }
 
 } // namespace geojson

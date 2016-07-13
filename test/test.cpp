@@ -5,6 +5,7 @@
 #include <cassert>
 #include <fstream>
 #include <sstream>
+#include <iostream>
 
 using namespace mapbox::geojson;
 
@@ -31,6 +32,8 @@ static void testPoint(bool use_convert) {
     const auto &p = geom.get<point>();
     assert(p.x == 30.5);
     assert(p.y == 50.5);
+
+    assert(parse(stringify(data)) == data);
 }
 
 static void testMultiPoint(bool use_convert) {
@@ -42,6 +45,8 @@ static void testMultiPoint(bool use_convert) {
 
     const auto &points = geom.get<multi_point>();
     assert(points.size() == 2);
+
+    assert(parse(stringify(data)) == data);
 }
 
 static void testLineString(bool use_convert) {
@@ -53,6 +58,8 @@ static void testLineString(bool use_convert) {
 
     const auto &points = geom.get<line_string>();
     assert(points.size() == 2);
+
+    assert(parse(stringify(data)) == data);
 }
 
 static void testMultiLineString(bool use_convert) {
@@ -65,6 +72,8 @@ static void testMultiLineString(bool use_convert) {
     const auto &lines = geom.get<multi_line_string>();
     assert(lines.size() == 1);
     assert(lines[0].size() == 2);
+
+    assert(parse(stringify(data)) == data);
 }
 
 static void testPolygon(bool use_convert) {
@@ -78,6 +87,8 @@ static void testPolygon(bool use_convert) {
     assert(rings.size() == 1);
     assert(rings[0].size() == 5);
     assert(rings[0][0] == rings[0][4]);
+
+    assert(parse(stringify(data)) == data);
 }
 
 static void testMultiPolygon(bool use_convert) {
@@ -92,6 +103,8 @@ static void testMultiPolygon(bool use_convert) {
     assert(polygons[0].size() == 1);
     assert(polygons[0][0].size() == 5);
     assert(polygons[0][0][0] == polygons[0][0][4]);
+
+    assert(parse(stringify(data)) == data);
 }
 
 static void testGeometryCollection(bool use_convert) {
@@ -104,6 +117,8 @@ static void testGeometryCollection(bool use_convert) {
     const auto &collection = geom.get<geometry_collection>();
     assert(collection[0].is<point>());
     assert(collection[1].is<line_string>());
+
+    assert(parse(stringify(data)) == data);
 }
 
 static void testFeature(bool use_convert) {
@@ -138,6 +153,8 @@ static void testFeature(bool use_convert) {
     assert(nested.get<values>().at(1).is<mapbox::util::recursive_wrapper<prop_map>>());
     assert(nested.get<values>().at(1).get<prop_map>().at("foo").is<std::string>());
     assert(nested.get<values>().at(1).get<prop_map>().at("foo").get<std::string>() == "bar");
+
+    assert(parse(stringify(data)) == data);
 }
 
 static void testFeatureNullProperties(bool use_convert) {
@@ -147,6 +164,8 @@ static void testFeatureNullProperties(bool use_convert) {
     const auto &f = data.get<feature>();
     assert(f.geometry.is<point>());
     assert(f.properties.size() == 0);
+
+    assert(parse(stringify(data)) == data);
 }
 
 static void testFeatureCollection(bool use_convert) {
@@ -155,6 +174,8 @@ static void testFeatureCollection(bool use_convert) {
 
     const auto &features = data.get<feature_collection>();
     assert(features.size() == 2);
+
+    assert(parse(stringify(data)) == data);
 }
 
 void testAll(bool use_convert) {
