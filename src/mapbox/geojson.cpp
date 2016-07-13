@@ -222,11 +222,14 @@ geojson convert(const rapidjson_value &json) {
     return convert<geojson>(json);
 }
 
-using Writer = rapidjson::Writer<rapidjson::StringBuffer>;
+template <>
+rapidjson_value convert<geometry>(const geometry&, rapidjson_allocator&);
 
-void write(const geometry&, Writer&);
-void write(const feature&, Writer&);
-void write(const feature_collection&, Writer&);
+template <>
+rapidjson_value convert<feature>(const feature&, rapidjson_allocator&);
+
+template <>
+rapidjson_value convert<feature_collection>(const feature_collection&, rapidjson_allocator&);
 
 struct to_type {
 public:
@@ -259,130 +262,156 @@ public:
     }
 };
 
-struct write_coordinates_or_geometries {
-    Writer& writer;
+struct to_coordinates_or_geometries {
+    rapidjson_allocator& allocator;
 
     // Handles line_string, polygon, multi_point, multi_line_string, multi_polygon, and geometry_collection.
     template <class E>
-    void operator()(const std::vector<E>& vector) {
-        writer.StartArray();
+    rapidjson_value operator()(const std::vector<E>& vector) {
+        rapidjson_value result;
+        result.SetArray();
         for (std::size_t i = 0; i < vector.size(); ++i) {
-            operator()(vector[i]);
+            result.PushBack(operator()(vector[i]), allocator);
         }
-        writer.EndArray();
+        return result;
     }
 
-    void operator()(const point& point) {
-        writer.StartArray();
-        writer.Double(point.x);
-        writer.Double(point.y);
-        writer.EndArray();
+    rapidjson_value operator()(const point& point) {
+        rapidjson_value result;
+        result.SetArray();
+        result.PushBack(point.x, allocator);
+        result.PushBack(point.y, allocator);
+        return result;
     }
 
-    void operator()(const geometry& geometry) {
-        return write(geometry, writer);
+    rapidjson_value operator()(const geometry& geometry) {
+        return convert(geometry, allocator);
     }
 };
 
-struct write_value {
-    Writer& writer;
+struct to_value {
+    rapidjson_allocator& allocator;
 
-    void operator()(null_value_t) {
-        writer.Null();
+    rapidjson_value operator()(null_value_t) {
+        rapidjson_value result;
+        result.SetNull();
+        return result;
     }
 
-    void operator()(bool t) {
-        writer.Bool(t);
+    rapidjson_value operator()(bool t) {
+        rapidjson_value result;
+        result.SetBool(t);
+        return result;
     }
 
-    void operator()(int64_t t) {
-        writer.Int64(t);
+    rapidjson_value operator()(int64_t t) {
+        rapidjson_value result;
+        result.SetInt64(t);
+        return result;
     }
 
-    void operator()(uint64_t t) {
-        writer.Uint64(t);
+    rapidjson_value operator()(uint64_t t) {
+        rapidjson_value result;
+        result.SetUint64(t);
+        return result;
     }
 
-    void operator()(double t) {
-        writer.Double(t);
+    rapidjson_value operator()(double t) {
+        rapidjson_value result;
+        result.SetDouble(t);
+        return result;
     }
 
-    void operator()(const std::string& t) {
-        writer.String(t.data(), t.size());
+    rapidjson_value operator()(const std::string& t) {
+        rapidjson_value result;
+        result.SetString(t.data(), t.size(), allocator);
+        return result;
     }
 
-    void operator()(const std::vector<value>& array) {
-        writer.StartArray();
+    rapidjson_value operator()(const std::vector<value>& array) {
+        rapidjson_value result;
+        result.SetArray();
         for (const auto& value : array) {
-            value::visit(value, *this);
+            result.PushBack(value::visit(value, *this), allocator);
         }
-        writer.EndArray();
+        return result;
     }
 
-    void operator()(const std::unordered_map<std::string, value>& map) {
-        writer.StartObject();
+    rapidjson_value operator()(const std::unordered_map<std::string, value>& map) {
+        rapidjson_value result;
+        result.SetObject();
         for (const auto& property : map) {
-            writer.Key(property.first.data(), property.first.size());
-            value::visit(property.second, write_value { writer });
+            result.AddMember(
+                rapidjson::GenericStringRef<char> {
+                    property.first.data(),
+                    rapidjson::SizeType(property.first.size())
+                },
+                value::visit(property.second, *this),
+                allocator);
         }
-        writer.EndObject();
+        return result;
     }
 };
 
-void write(const geometry& geometry, Writer& writer) {
-    writer.StartObject();
+template <>
+rapidjson_value convert<geometry>(const geometry& geometry, rapidjson_allocator& allocator) {
+    rapidjson_value value(rapidjson::kObjectType);
 
-    writer.Key("type");
-    writer.String(geometry::visit(geometry, to_type()));
+    value.AddMember(
+        "type",
+        rapidjson::GenericStringRef<char> { geometry::visit(geometry, to_type()) },
+        allocator);
 
-    writer.Key(geometry.is<geometry_collection>() ? "geometries" : "coordinates");
-    geometry::visit(geometry, write_coordinates_or_geometries { writer });
+    value.AddMember(
+        rapidjson::GenericStringRef<char> { geometry.is<geometry_collection>() ? "geometries" : "coordinates" },
+        geometry::visit(geometry, to_coordinates_or_geometries { allocator }),
+        allocator);
 
-    writer.EndObject();
+    return value;
 }
 
-void write(const feature& feature, Writer& writer) {
-    writer.StartObject();
-
-    writer.Key("type");
-    writer.String("Feature");
+template <>
+rapidjson_value convert<feature>(const feature& feature, rapidjson_allocator& allocator) {
+    rapidjson_value value(rapidjson::kObjectType);
+    value.AddMember("type", "Feature", allocator);
 
     if (feature.id) {
-        writer.Key("id");
-        identifier::visit(*feature.id, write_value { writer });
+        value.AddMember("id", identifier::visit(*feature.id, to_value { allocator }), allocator);
     }
 
-    writer.Key("geometry");
-    write(feature.geometry, writer);
+    value.AddMember("geometry", convert(feature.geometry, allocator), allocator);
+    value.AddMember("properties", to_value { allocator }(feature.properties), allocator);
 
-    writer.Key("properties");
-    write_value { writer }(feature.properties);
-
-    writer.EndObject();
+    return value;
 }
 
-void write(const feature_collection& feature_collection, Writer& writer) {
-    writer.StartObject();
+template <>
+rapidjson_value convert<feature_collection>(const feature_collection& feature_collection, rapidjson_allocator& allocator) {
+    rapidjson_value value(rapidjson::kObjectType);
+    value.AddMember("type", "FeatureCollection", allocator);
 
-    writer.Key("type");
-    writer.String("FeatureCollection");
-
-    writer.Key("features");
-    writer.StartArray();
+    rapidjson_value features(rapidjson::kArrayType);
     for (const auto& feature : feature_collection) {
-        write(feature, writer);
+        features.PushBack(convert(feature, allocator), allocator);
     }
-    writer.EndArray();
+    value.AddMember("features", features, allocator);
 
-    writer.EndObject();
+    return value;
+}
+
+rapidjson_value convert(const geojson& geojson, rapidjson_allocator& allocator) {
+    return geojson::visit(geojson, [&] (const auto& alternative) {
+        return convert(alternative, allocator);
+    });
 }
 
 template <class T>
 std::string stringify(const T& t) {
-    rapidjson::StringBuffer s;
-    Writer writer(s);
-    write(t, writer);
-    return s.GetString();
+    rapidjson_allocator allocator;
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    convert(t, allocator).Accept(writer);
+    return buffer.GetString();
 }
 
 std::string stringify(const geojson& geojson) {
