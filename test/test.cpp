@@ -194,6 +194,18 @@ static void testFeatureCollection(bool use_convert) {
     assert(parse(writeGeoJSON(data, use_convert)) == data);
 }
 
+static void testFeatureID(bool use_convert) {
+    const auto &data = readGeoJSON("test/fixtures/feature-id.json", use_convert);
+    assert(data.is<feature_collection>());
+
+    const auto &features = data.get<feature_collection>();
+
+    assert(features.at(0).id == identifier { 1234 });
+    assert(features.at(1).id == identifier { "abcd" });
+
+    assert(parse(writeGeoJSON(data, use_convert)) == data);
+}
+
 void testAll(bool use_convert) {
     testPoint(use_convert);
     testMultiPoint(use_convert);
@@ -205,6 +217,7 @@ void testAll(bool use_convert) {
     testFeature(use_convert);
     testFeatureNullProperties(use_convert);
     testFeatureCollection(use_convert);
+    testFeatureID(use_convert);
 }
 
 int main() {
