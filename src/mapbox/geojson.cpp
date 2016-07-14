@@ -127,6 +127,22 @@ value convert<value>(const rapidjson_value &json) {
 }
 
 template <>
+identifier convert<identifier>(const rapidjson_value &json) {
+    switch (json.GetType()) {
+    case rapidjson::kStringType:
+        return std::string(json.GetString(), json.GetStringLength());
+    case rapidjson::kNumberType:
+        if (json.IsUint64())
+            return std::uint64_t(json.GetUint64());
+        if (json.IsInt64())
+            return std::int64_t(json.GetInt64());
+        return json.GetDouble();
+    default:
+        throw error("Feature id must be a string or number");
+    }
+}
+
+template <>
 feature convert<feature>(const rapidjson_value &json) {
     if (!json.IsObject())
         throw error("Feature must be an object");
@@ -145,6 +161,11 @@ feature convert<feature>(const rapidjson_value &json) {
         throw error("Feature must have a geometry property");
 
     feature feature{ convert<geometry>(geom_itr->value) };
+
+    auto const &id_itr = json.FindMember("id");
+    if (id_itr != json_end) {
+        feature.id = convert<identifier>(id_itr->value);
+    }
 
     auto const &prop_itr = json.FindMember("properties");
 
