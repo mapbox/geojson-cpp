@@ -1,6 +1,9 @@
 #include <mapbox/geojson.hpp>
 #include <mapbox/geojson/rapidjson.hpp>
+
 #include <rapidjson/document.h>
+#include <rapidjson/writer.h>
+#include <rapidjson/stringbuffer.h>
 
 namespace mapbox {
 namespace geojson {
@@ -217,6 +220,204 @@ geojson parse(const std::string &json) {
 
 geojson convert(const rapidjson_value &json) {
     return convert<geojson>(json);
+}
+
+template <>
+rapidjson_value convert<geometry>(const geometry&, rapidjson_allocator&);
+
+template <>
+rapidjson_value convert<feature>(const feature&, rapidjson_allocator&);
+
+template <>
+rapidjson_value convert<feature_collection>(const feature_collection&, rapidjson_allocator&);
+
+struct to_type {
+public:
+    const char * operator()(const point&) {
+        return "Point";
+    }
+
+    const char * operator()(const line_string&) {
+        return "LineString";
+    }
+
+    const char * operator()(const polygon&) {
+        return "Polygon";
+    }
+
+    const char * operator()(const multi_point&) {
+        return "MultiPoint";
+    }
+
+    const char * operator()(const multi_line_string&) {
+        return "MultiLineString";
+    }
+
+    const char * operator()(const multi_polygon&) {
+        return "MultiPolygon";
+    }
+
+    const char * operator()(const geometry_collection&) {
+        return "GeometryCollection";
+    }
+};
+
+struct to_coordinates_or_geometries {
+    rapidjson_allocator& allocator;
+
+    // Handles line_string, polygon, multi_point, multi_line_string, multi_polygon, and geometry_collection.
+    template <class E>
+    rapidjson_value operator()(const std::vector<E>& vector) {
+        rapidjson_value result;
+        result.SetArray();
+        for (std::size_t i = 0; i < vector.size(); ++i) {
+            result.PushBack(operator()(vector[i]), allocator);
+        }
+        return result;
+    }
+
+    rapidjson_value operator()(const point& point) {
+        rapidjson_value result;
+        result.SetArray();
+        result.PushBack(point.x, allocator);
+        result.PushBack(point.y, allocator);
+        return result;
+    }
+
+    rapidjson_value operator()(const geometry& geometry) {
+        return convert(geometry, allocator);
+    }
+};
+
+struct to_value {
+    rapidjson_allocator& allocator;
+
+    rapidjson_value operator()(null_value_t) {
+        rapidjson_value result;
+        result.SetNull();
+        return result;
+    }
+
+    rapidjson_value operator()(bool t) {
+        rapidjson_value result;
+        result.SetBool(t);
+        return result;
+    }
+
+    rapidjson_value operator()(int64_t t) {
+        rapidjson_value result;
+        result.SetInt64(t);
+        return result;
+    }
+
+    rapidjson_value operator()(uint64_t t) {
+        rapidjson_value result;
+        result.SetUint64(t);
+        return result;
+    }
+
+    rapidjson_value operator()(double t) {
+        rapidjson_value result;
+        result.SetDouble(t);
+        return result;
+    }
+
+    rapidjson_value operator()(const std::string& t) {
+        rapidjson_value result;
+        result.SetString(t.data(), t.size(), allocator);
+        return result;
+    }
+
+    rapidjson_value operator()(const std::vector<value>& array) {
+        rapidjson_value result;
+        result.SetArray();
+        for (const auto& value : array) {
+            result.PushBack(value::visit(value, *this), allocator);
+        }
+        return result;
+    }
+
+    rapidjson_value operator()(const std::unordered_map<std::string, value>& map) {
+        rapidjson_value result;
+        result.SetObject();
+        for (const auto& property : map) {
+            result.AddMember(
+                rapidjson::GenericStringRef<char> {
+                    property.first.data(),
+                    rapidjson::SizeType(property.first.size())
+                },
+                value::visit(property.second, *this),
+                allocator);
+        }
+        return result;
+    }
+};
+
+template <>
+rapidjson_value convert<geometry>(const geometry& geometry, rapidjson_allocator& allocator) {
+    rapidjson_value value(rapidjson::kObjectType);
+
+    value.AddMember(
+        "type",
+        rapidjson::GenericStringRef<char> { geometry::visit(geometry, to_type()) },
+        allocator);
+
+    value.AddMember(
+        rapidjson::GenericStringRef<char> { geometry.is<geometry_collection>() ? "geometries" : "coordinates" },
+        geometry::visit(geometry, to_coordinates_or_geometries { allocator }),
+        allocator);
+
+    return value;
+}
+
+template <>
+rapidjson_value convert<feature>(const feature& feature, rapidjson_allocator& allocator) {
+    rapidjson_value value(rapidjson::kObjectType);
+    value.AddMember("type", "Feature", allocator);
+
+    if (feature.id) {
+        value.AddMember("id", identifier::visit(*feature.id, to_value { allocator }), allocator);
+    }
+
+    value.AddMember("geometry", convert(feature.geometry, allocator), allocator);
+    value.AddMember("properties", to_value { allocator }(feature.properties), allocator);
+
+    return value;
+}
+
+template <>
+rapidjson_value convert<feature_collection>(const feature_collection& feature_collection, rapidjson_allocator& allocator) {
+    rapidjson_value value(rapidjson::kObjectType);
+    value.AddMember("type", "FeatureCollection", allocator);
+
+    rapidjson_value features(rapidjson::kArrayType);
+    for (const auto& feature : feature_collection) {
+        features.PushBack(convert(feature, allocator), allocator);
+    }
+    value.AddMember("features", features, allocator);
+
+    return value;
+}
+
+rapidjson_value convert(const geojson& geojson, rapidjson_allocator& allocator) {
+    return geojson::visit(geojson, [&] (const auto& alternative) {
+        return convert(alternative, allocator);
+    });
+}
+
+template <class T>
+std::string stringify(const T& t) {
+    rapidjson_allocator allocator;
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    convert(t, allocator).Accept(writer);
+    return buffer.GetString();
+}
+
+std::string stringify(const geojson& geojson) {
+    return geojson::visit(geojson, [] (const auto& alternative) {
+        return stringify(alternative);
+    });
 }
 
 } // namespace geojson
