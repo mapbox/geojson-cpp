@@ -28,8 +28,8 @@ Cont convert(const rapidjson_value &json) {
     auto size = json.Size();
     points.reserve(size);
 
-    for (rapidjson::SizeType i = 0; i < size; ++i) {
-        points.push_back(convert<typename Cont::value_type>(json[i]));
+    for (auto &value : json.GetArray()) {
+        points.push_back(convert<typename Cont::value_type>(value));
     }
     return points;
 }
@@ -94,9 +94,9 @@ prop_map convert(const rapidjson_value &json) {
         throw error("properties must be an object");
 
     prop_map result;
-    for (auto itr = json.MemberBegin(); itr != json.MemberEnd(); ++itr) {
-        result.emplace(std::string(itr->name.GetString(), itr->name.GetStringLength()),
-                       convert<value>(itr->value));
+    for (auto &member : json.GetObject()) {
+        result.emplace(std::string(member.name.GetString(), member.name.GetStringLength()),
+                       convert<value>(member.value));
     }
     return result;
 }
@@ -208,8 +208,8 @@ geojson convert<geojson>(const rapidjson_value &json) {
         const auto &size = json_features.Size();
         collection.reserve(size);
 
-        for (rapidjson::SizeType i = 0; i < size; ++i) {
-            collection.push_back(convert<feature>(json_features[i]));
+        for (auto &feature_obj : json_features.GetArray()) {
+            collection.push_back(convert<feature>(feature_obj));
         }
 
         return geojson{ collection };
