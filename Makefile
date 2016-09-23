@@ -18,7 +18,7 @@ mason_packages/headers/geometry:
 build:
 	mkdir -p build
 
-build/geojson.o: src/mapbox/geojson.cpp include/mapbox/geojson.hpp build mason_packages/headers/geometry Makefile
+build/geojson.o: src/mapbox/geojson.cpp include/mapbox/geojson.hpp include/mapbox/geojson_impl.hpp build mason_packages/headers/geometry Makefile
 	$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEPS) $(RAPIDJSON_DEP) -c $< -o $@
 
 build/libgeojson.a: build/geojson.o
