@@ -18,6 +18,8 @@ mason_packages/headers/geometry:
 build:
 	mkdir -p build
 
+CFLAGS += -fvisibility=hidden
+
 build/geojson.o: src/mapbox/geojson.cpp include/mapbox/geojson.hpp include/mapbox/geojson_impl.hpp build mason_packages/headers/geometry Makefile
 	$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEPS) $(RAPIDJSON_DEP) -c $< -o $@
 
