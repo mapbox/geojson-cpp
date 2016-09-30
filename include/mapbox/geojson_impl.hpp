@@ -30,8 +30,8 @@ Cont convert(const rapidjson_value &json) {
     auto size = json.Size();
     points.reserve(size);
 
-    for (auto &value : json.GetArray()) {
-        points.push_back(convert<typename Cont::value_type>(value));
+    for (auto &element : json.GetArray()) {
+        points.push_back(convert<typename Cont::value_type>(element));
     }
     return points;
 }
@@ -162,11 +162,11 @@ feature convert<feature>(const rapidjson_value &json) {
     if (geom_itr == json_end)
         throw error("Feature must have a geometry property");
 
-    feature feature{ convert<geometry>(geom_itr->value) };
+    feature result{ convert<geometry>(geom_itr->value) };
 
     auto const &id_itr = json.FindMember("id");
     if (id_itr != json_end) {
-        feature.id = convert<identifier>(id_itr->value);
+        result.id = convert<identifier>(id_itr->value);
     }
 
     auto const &prop_itr = json.FindMember("properties");
@@ -176,10 +176,10 @@ feature convert<feature>(const rapidjson_value &json) {
 
     const auto &json_props = prop_itr->value;
     if (!json_props.IsNull()) {
-        feature.properties = convert<prop_map>(json_props);
+        result.properties = convert<prop_map>(json_props);
     }
 
-    return feature;
+    return result;
 }
 
 template <>
@@ -299,16 +299,16 @@ struct to_coordinates_or_geometries {
         return result;
     }
 
-    rapidjson_value operator()(const point& point) {
+    rapidjson_value operator()(const point& element) {
         rapidjson_value result;
         result.SetArray();
-        result.PushBack(point.x, allocator);
-        result.PushBack(point.y, allocator);
+        result.PushBack(element.x, allocator);
+        result.PushBack(element.y, allocator);
         return result;
     }
 
-    rapidjson_value operator()(const geometry& geometry) {
-        return convert(geometry, allocator);
+    rapidjson_value operator()(const geometry& element) {
+        return convert(element, allocator);
     }
 };
 
@@ -347,15 +347,15 @@ struct to_value {
 
     rapidjson_value operator()(const std::string& t) {
         rapidjson_value result;
-        result.SetString(t.data(), t.size(), allocator);
+        result.SetString(t.data(), rapidjson::SizeType(t.size()), allocator);
         return result;
     }
 
     rapidjson_value operator()(const std::vector<value>& array) {
         rapidjson_value result;
         result.SetArray();
-        for (const auto& value : array) {
-            result.PushBack(value::visit(value, *this), allocator);
+        for (const auto& item : array) {
+            result.PushBack(value::visit(item, *this), allocator);
         }
         return result;
     }
@@ -377,53 +377,53 @@ struct to_value {
 };
 
 template <>
-rapidjson_value convert<geometry>(const geometry& geometry, rapidjson_allocator& allocator) {
-    rapidjson_value value(rapidjson::kObjectType);
+rapidjson_value convert<geometry>(const geometry& element, rapidjson_allocator& allocator) {
+    rapidjson_value result(rapidjson::kObjectType);
 
-    value.AddMember(
+    result.AddMember(
         "type",
-        rapidjson::GenericStringRef<char> { geometry::visit(geometry, to_type()) },
+        rapidjson::GenericStringRef<char> { geometry::visit(element, to_type()) },
         allocator);
 
-    value.AddMember(
-        rapidjson::GenericStringRef<char> { geometry.is<geometry_collection>() ? "geometries" : "coordinates" },
-        geometry::visit(geometry, to_coordinates_or_geometries { allocator }),
+    result.AddMember(
+        rapidjson::GenericStringRef<char> { element.is<geometry_collection>() ? "geometries" : "coordinates" },
+        geometry::visit(element, to_coordinates_or_geometries { allocator }),
         allocator);
 
-    return value;
+    return result;
 }
 
 template <>
-rapidjson_value convert<feature>(const feature& feature, rapidjson_allocator& allocator) {
-    rapidjson_value value(rapidjson::kObjectType);
-    value.AddMember("type", "Feature", allocator);
+rapidjson_value convert<feature>(const feature& element, rapidjson_allocator& allocator) {
+    rapidjson_value result(rapidjson::kObjectType);
+    result.AddMember("type", "Feature", allocator);
 
-    if (feature.id) {
-        value.AddMember("id", identifier::visit(*feature.id, to_value { allocator }), allocator);
+    if (element.id) {
+        result.AddMember("id", identifier::visit(*element.id, to_value { allocator }), allocator);
     }
 
-    value.AddMember("geometry", convert(feature.geometry, allocator), allocator);
-    value.AddMember("properties", to_value { allocator }(feature.properties), allocator);
+    result.AddMember("geometry", convert(element.geometry, allocator), allocator);
+    result.AddMember("properties", to_value { allocator }(element.properties), allocator);
 
-    return value;
+    return result;
 }
 
 template <>
-rapidjson_value convert<feature_collection>(const feature_collection& feature_collection, rapidjson_allocator& allocator) {
-    rapidjson_value value(rapidjson::kObjectType);
-    value.AddMember("type", "FeatureCollection", allocator);
+rapidjson_value convert<feature_collection>(const feature_collection& collection, rapidjson_allocator& allocator) {
+    rapidjson_value result(rapidjson::kObjectType);
+    result.AddMember("type", "FeatureCollection", allocator);
 
     rapidjson_value features(rapidjson::kArrayType);
-    for (const auto& feature : feature_collection) {
-        features.PushBack(convert(feature, allocator), allocator);
+    for (const auto& element : collection) {
+        features.PushBack(convert(element, allocator), allocator);
     }
-    value.AddMember("features", features, allocator);
+    result.AddMember("features", features, allocator);
 
-    return value;
+    return result;
 }
 
-rapidjson_value convert(const geojson& geojson, rapidjson_allocator& allocator) {
-    return geojson::visit(geojson, [&] (const auto& alternative) {
+rapidjson_value convert(const geojson& element, rapidjson_allocator& allocator) {
+    return geojson::visit(element, [&] (const auto& alternative) {
         return convert(alternative, allocator);
     });
 }
@@ -437,8 +437,8 @@ std::string stringify(const T& t) {
     return buffer.GetString();
 }
 
-std::string stringify(const geojson& geojson) {
-    return geojson::visit(geojson, [] (const auto& alternative) {
+std::string stringify(const geojson& element) {
+    return geojson::visit(element, [] (const auto& alternative) {
         return stringify(alternative);
     });
 }
