@@ -21,7 +21,7 @@ geojson<double> readGeoJSON(const std::string &path, bool use_convert) {
         d.Parse<0>(buffer.str().c_str());
         return convert_geojson<double>(d);
     } else {
-        return parse<double>(buffer.str());
+        return parse(buffer.str());
     }
 }
 
@@ -49,7 +49,7 @@ static void testPoint(bool use_convert) {
     assert(p.x == 30.5);
     assert(p.y == 50.5);
 
-    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    auto out = parse(writeGeoJSON(data, use_convert));
     assert(out == data);
 }
 
@@ -63,7 +63,7 @@ static void testMultiPoint(bool use_convert) {
     const auto &points = geom.get<multi_point<double>>();
     assert(points.size() == 2);
 
-    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    auto out = parse(writeGeoJSON(data, use_convert));
     assert(out == data);
 }
 
@@ -77,7 +77,7 @@ static void testLineString(bool use_convert) {
     const auto &points = geom.get<line_string<double>>();
     assert(points.size() == 2);
 
-    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    auto out = parse(writeGeoJSON(data, use_convert));
     assert(out == data);
 }
 
@@ -92,7 +92,7 @@ static void testMultiLineString(bool use_convert) {
     assert(lines.size() == 1);
     assert(lines[0].size() == 2);
 
-    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    auto out = parse(writeGeoJSON(data, use_convert));
     assert(out == data);
 }
 
@@ -108,7 +108,7 @@ static void testPolygon(bool use_convert) {
     assert(rings[0].size() == 5);
     assert(rings[0][0] == rings[0][4]);
 
-    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    auto out = parse(writeGeoJSON(data, use_convert));
     assert(out == data);
 }
 
@@ -125,7 +125,7 @@ static void testMultiPolygon(bool use_convert) {
     assert(polygons[0][0].size() == 5);
     assert(polygons[0][0][0] == polygons[0][0][4]);
 
-    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    auto out = parse(writeGeoJSON(data, use_convert));
     assert(out == data);
 }
 
@@ -140,7 +140,7 @@ static void testGeometryCollection(bool use_convert) {
     assert(collection[0].is<point<double>>());
     assert(collection[1].is<line_string<double>>());
 
-    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    auto out = parse(writeGeoJSON(data, use_convert));
     assert(out == data);
 }
 
@@ -177,7 +177,7 @@ static void testFeature(bool use_convert) {
     assert(nested.get<values>().at(1).get<prop_map>().at("foo").is<std::string>());
     assert(nested.get<values>().at(1).get<prop_map>().at("foo").get<std::string>() == "bar");
 
-    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    auto out = parse(writeGeoJSON(data, use_convert));
     assert(out == data);
 }
 
@@ -189,7 +189,7 @@ static void testFeatureNullProperties(bool use_convert) {
     assert(f.geometry.is<point<double>>());
     assert(f.properties.size() == 0);
 
-    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    auto out = parse(writeGeoJSON(data, use_convert));
     assert(out == data);
 }
 
@@ -200,7 +200,7 @@ static void testFeatureCollection(bool use_convert) {
     const auto &features = data.get<feature_collection<double>>();
     assert(features.size() == 2);
 
-    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    auto out = parse(writeGeoJSON(data, use_convert));
     assert(out == data);
 }
 
@@ -213,7 +213,7 @@ static void testFeatureID(bool use_convert) {
     assert(features.at(0).id == identifier{ 1234 });
     assert(features.at(1).id == identifier{ "abcd" });
 
-    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    auto out = parse(writeGeoJSON(data, use_convert));
     assert(out == data);
 }
 

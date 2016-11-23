@@ -404,7 +404,7 @@ geometry::feature_collection<T> parse_feature_collection(const std::string &json
     return convert_feature_collection<T>(d);
 }
 
-template <typename T>
+template <typename T = double>
 geojson<T> parse(const std::string &json) {
     rapidjson_document d;
     d.Parse(json.c_str());
