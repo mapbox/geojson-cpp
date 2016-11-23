@@ -1,4 +1,4 @@
-CXXFLAGS += -I include -std=c++14 -Wall -Wextra -Wshadow -Werror -O3 -fPIC
+CXXFLAGS += -Iinclude -std=c++14 -Wall -Wextra -Wshadow -Werror -O3
 
 MASON ?= .mason/mason
 VARIANT = variant 1.1.0
@@ -8,7 +8,7 @@ RAPIDJSON = rapidjson 1.1.0
 DEPS = `$(MASON) cflags $(VARIANT)` `$(MASON) cflags $(GEOMETRY)`
 RAPIDJSON_DEP = `$(MASON) cflags $(RAPIDJSON)`
 
-default: build/libgeojson.a
+default: build build/test
 
 mason_packages/headers/geometry:
 	$(MASON) install $(VARIANT)
@@ -20,16 +20,10 @@ build:
 
 CFLAGS += -fvisibility=hidden
 
-build/geojson.o: src/mapbox/geojson.cpp include/mapbox/geojson.hpp include/mapbox/geojson_impl.hpp build mason_packages/headers/geometry Makefile
-	$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEPS) $(RAPIDJSON_DEP) -c $< -o $@
+build/test: test/test.cpp test/fixtures/*
+	$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEPS) $(RAPIDJSON_DEP) $< -o $@
 
-build/libgeojson.a: build/geojson.o
-	$(AR) -rcs $@ $<
-
-build/test: test/test.cpp test/fixtures/* build/libgeojson.a
-	$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEPS) $(RAPIDJSON_DEP) $< -Lbuild -lgeojson -o $@
-
-test: build/test
+test: build build/test
 	./build/test
 
 format:

@@ -1,5 +1,4 @@
 #include <mapbox/geojson.hpp>
-#include <mapbox/geojson/rapidjson.hpp>
 #include <mapbox/geometry.hpp>
 
 #include <rapidjson/writer.h>
@@ -11,17 +10,18 @@
 #include <iostream>
 
 using namespace mapbox::geojson;
+using namespace mapbox::geometry;
 
-geojson readGeoJSON(const std::string &path, bool use_convert) {
+geojson<double> readGeoJSON(const std::string &path, bool use_convert) {
     std::ifstream t(path.c_str());
     std::stringstream buffer;
     buffer << t.rdbuf();
     if (use_convert) {
         rapidjson_document d;
         d.Parse<0>(buffer.str().c_str());
-        return convert(d);
+        return convert_geojson<double>(d);
     } else {
-        return parse(buffer.str());
+        return parse<double>(buffer.str());
     }
 }
 
@@ -40,109 +40,116 @@ std::string writeGeoJSON(const T& t, bool use_convert) {
 
 static void testPoint(bool use_convert) {
     const auto &data = readGeoJSON("test/fixtures/point.json", use_convert);
-    assert(data.is<geometry>());
+    assert(data.is<geometry<double>>());
 
-    const auto &geom = data.get<geometry>();
-    assert(geom.is<point>());
+    const auto &geom = data.get<geometry<double>>();
+    assert(geom.is<point<double>>());
 
-    const auto &p = geom.get<point>();
+    const auto &p = geom.get<point<double>>();
     assert(p.x == 30.5);
     assert(p.y == 50.5);
 
-    assert(parse(writeGeoJSON(data, use_convert)) == data);
+    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    assert(out == data);
 }
 
 static void testMultiPoint(bool use_convert) {
     const auto &data = readGeoJSON("test/fixtures/multi-point.json", use_convert);
-    assert(data.is<geometry>());
+    assert(data.is<geometry<double>>());
 
-    const auto &geom = data.get<geometry>();
-    assert(geom.is<multi_point>());
+    const auto &geom = data.get<geometry<double>>();
+    assert(geom.is<multi_point<double>>());
 
-    const auto &points = geom.get<multi_point>();
+    const auto &points = geom.get<multi_point<double>>();
     assert(points.size() == 2);
 
-    assert(parse(writeGeoJSON(data, use_convert)) == data);
+    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    assert(out == data);
 }
 
 static void testLineString(bool use_convert) {
     const auto &data = readGeoJSON("test/fixtures/line-string.json", use_convert);
-    assert(data.is<geometry>());
+    assert(data.is<geometry<double>>());
 
-    const auto &geom = data.get<geometry>();
-    assert(geom.is<line_string>());
+    const auto &geom = data.get<geometry<double>>();
+    assert(geom.is<line_string<double>>());
 
-    const auto &points = geom.get<line_string>();
+    const auto &points = geom.get<line_string<double>>();
     assert(points.size() == 2);
 
-    assert(parse(writeGeoJSON(data, use_convert)) == data);
+    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    assert(out == data);
 }
 
 static void testMultiLineString(bool use_convert) {
     const auto &data = readGeoJSON("test/fixtures/multi-line-string.json", use_convert);
-    assert(data.is<geometry>());
+    assert(data.is<geometry<double>>());
 
-    const auto &geom = data.get<geometry>();
-    assert(geom.is<multi_line_string>());
+    const auto &geom = data.get<geometry<double>>();
+    assert(geom.is<multi_line_string<double>>());
 
-    const auto &lines = geom.get<multi_line_string>();
+    const auto &lines = geom.get<multi_line_string<double>>();
     assert(lines.size() == 1);
     assert(lines[0].size() == 2);
 
-    assert(parse(writeGeoJSON(data, use_convert)) == data);
+    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    assert(out == data);
 }
 
 static void testPolygon(bool use_convert) {
     const auto &data = readGeoJSON("test/fixtures/polygon.json", use_convert);
-    assert(data.is<geometry>());
+    assert(data.is<geometry<double>>());
 
-    const auto &geom = data.get<geometry>();
-    assert(geom.is<polygon>());
+    const auto &geom = data.get<geometry<double>>();
+    assert(geom.is<polygon<double>>());
 
-    const auto &rings = geom.get<polygon>();
+    const auto &rings = geom.get<polygon<double>>();
     assert(rings.size() == 1);
     assert(rings[0].size() == 5);
     assert(rings[0][0] == rings[0][4]);
 
-    assert(parse(writeGeoJSON(data, use_convert)) == data);
+    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    assert(out == data);
 }
 
 static void testMultiPolygon(bool use_convert) {
     const auto &data = readGeoJSON("test/fixtures/multi-polygon.json", use_convert);
-    assert(data.is<geometry>());
+    assert(data.is<geometry<double>>());
 
-    const auto &geom = data.get<geometry>();
-    assert(geom.is<multi_polygon>());
+    const auto &geom = data.get<geometry<double>>();
+    assert(geom.is<multi_polygon<double>>());
 
-    const auto &polygons = geom.get<multi_polygon>();
+    const auto &polygons = geom.get<multi_polygon<double>>();
     assert(polygons.size() == 1);
     assert(polygons[0].size() == 1);
     assert(polygons[0][0].size() == 5);
     assert(polygons[0][0][0] == polygons[0][0][4]);
 
-    assert(parse(writeGeoJSON(data, use_convert)) == data);
+    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    assert(out == data);
 }
 
 static void testGeometryCollection(bool use_convert) {
     const auto &data = readGeoJSON("test/fixtures/geometry-collection.json", use_convert);
-    assert(data.is<geometry>());
+    assert(data.is<geometry<double>>());
 
-    const auto &geom = data.get<geometry>();
-    assert(geom.is<geometry_collection>());
+    const auto &geom = data.get<geometry<double>>();
+    assert(geom.is<geometry_collection<double>>());
 
-    const auto &collection = geom.get<geometry_collection>();
-    assert(collection[0].is<point>());
-    assert(collection[1].is<line_string>());
+    const auto &collection = geom.get<geometry_collection<double>>();
+    assert(collection[0].is<point<double>>());
+    assert(collection[1].is<line_string<double>>());
 
-    assert(parse(writeGeoJSON(data, use_convert)) == data);
+    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    assert(out == data);
 }
 
 static void testFeature(bool use_convert) {
     const auto &data = readGeoJSON("test/fixtures/feature.json", use_convert);
-    assert(data.is<feature>());
+    assert(data.is<feature<double>>());
 
-    const auto &f = data.get<feature>();
-    assert(f.geometry.is<point>());
+    const auto &f = data.get<feature<double>>();
+    assert(f.geometry.is<point<double>>());
 
     assert(f.properties.at("bool").is<bool>());
     assert(f.properties.at("bool") == true);
@@ -170,40 +177,44 @@ static void testFeature(bool use_convert) {
     assert(nested.get<values>().at(1).get<prop_map>().at("foo").is<std::string>());
     assert(nested.get<values>().at(1).get<prop_map>().at("foo").get<std::string>() == "bar");
 
-    assert(parse(writeGeoJSON(data, use_convert)) == data);
+    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    assert(out == data);
 }
 
 static void testFeatureNullProperties(bool use_convert) {
     const auto &data = readGeoJSON("test/fixtures/feature-null-properties.json", use_convert);
-    assert(data.is<feature>());
+    assert(data.is<feature<double>>());
 
-    const auto &f = data.get<feature>();
-    assert(f.geometry.is<point>());
+    const auto &f = data.get<feature<double>>();
+    assert(f.geometry.is<point<double>>());
     assert(f.properties.size() == 0);
-
-    assert(parse(writeGeoJSON(data, use_convert)) == data);
+    
+    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    assert(out == data);
 }
 
 static void testFeatureCollection(bool use_convert) {
     const auto &data = readGeoJSON("test/fixtures/feature-collection.json", use_convert);
-    assert(data.is<feature_collection>());
+    assert(data.is<feature_collection<double>>());
 
-    const auto &features = data.get<feature_collection>();
+    const auto &features = data.get<feature_collection<double>>();
     assert(features.size() == 2);
 
-    assert(parse(writeGeoJSON(data, use_convert)) == data);
+    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    assert(out == data);
 }
 
 static void testFeatureID(bool use_convert) {
     const auto &data = readGeoJSON("test/fixtures/feature-id.json", use_convert);
-    assert(data.is<feature_collection>());
+    assert(data.is<feature_collection<double>>());
 
-    const auto &features = data.get<feature_collection>();
+    const auto &features = data.get<feature_collection<double>>();
 
     assert(features.at(0).id == identifier { 1234 });
     assert(features.at(1).id == identifier { "abcd" });
 
-    assert(parse(writeGeoJSON(data, use_convert)) == data);
+    auto out = parse<double>(writeGeoJSON(data, use_convert));
+    assert(out == data);
 }
 
 void testAll(bool use_convert) {
