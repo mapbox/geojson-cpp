@@ -58,7 +58,7 @@ geometry::point<T> convert_point(const rapidjson_value &json) {
 }
 
 template <>
-geometry::point<std::int64_t> convert_point<std::int64_t>(const rapidjson_value &json) {
+inline geometry::point<std::int64_t> convert_point<std::int64_t>(const rapidjson_value &json) {
     if (json.Size() < 2) {
         throw error("coordinates array must have at least 2 numbers");
     }
@@ -66,7 +66,7 @@ geometry::point<std::int64_t> convert_point<std::int64_t>(const rapidjson_value 
 }
 
 template <>
-geometry::point<std::uint64_t> convert_point<std::uint64_t>(const rapidjson_value &json) {
+inline geometry::point<std::uint64_t> convert_point<std::uint64_t>(const rapidjson_value &json) {
     if (json.Size() < 2) {
         throw error("coordinates array must have at least 2 numbers");
     }
@@ -220,10 +220,10 @@ geometry::geometry<T> convert_geometry(const rapidjson_value &json) {
 }
 
 template <>
-geometry::value convert<geometry::value>(const rapidjson_value &json);
+inline geometry::value convert<geometry::value>(const rapidjson_value &json);
 
 template <>
-std::vector<geometry::value> convert<std::vector<geometry::value>>(const rapidjson_value &json) {
+inline std::vector<geometry::value> convert<std::vector<geometry::value>>(const rapidjson_value &json) {
     std::vector<geometry::value> points;
     auto size = json.Size();
     points.reserve(size);
@@ -235,7 +235,7 @@ std::vector<geometry::value> convert<std::vector<geometry::value>>(const rapidjs
 }
 
 template <>
-geometry::property_map convert<geometry::property_map>(const rapidjson_value &json) {
+inline geometry::property_map convert<geometry::property_map>(const rapidjson_value &json) {
     if (!json.IsObject())
         throw error("properties must be an object");
 
@@ -248,7 +248,7 @@ geometry::property_map convert<geometry::property_map>(const rapidjson_value &js
 }
 
 template <>
-geometry::value convert<geometry::value>(const rapidjson_value &json) {
+inline geometry::value convert<geometry::value>(const rapidjson_value &json) {
     switch (json.GetType()) {
     case rapidjson::kNullType:
         return nullptr;
@@ -275,7 +275,7 @@ geometry::value convert<geometry::value>(const rapidjson_value &json) {
 }
 
 template <>
-geometry::identifier convert<geometry::identifier>(const rapidjson_value &json) {
+inline geometry::identifier convert<geometry::identifier>(const rapidjson_value &json) {
     switch (json.GetType()) {
     case rapidjson::kStringType:
         return std::string(json.GetString(), json.GetStringLength());

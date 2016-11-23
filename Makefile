@@ -8,7 +8,7 @@ RAPIDJSON = rapidjson 1.1.0
 DEPS = `$(MASON) cflags $(VARIANT)` `$(MASON) cflags $(GEOMETRY)`
 RAPIDJSON_DEP = `$(MASON) cflags $(RAPIDJSON)`
 
-default: build build/test
+default: mason_packages/headers/geometry build build/test
 
 mason_packages/headers/geometry:
 	$(MASON) install $(VARIANT)
@@ -20,10 +20,10 @@ build:
 
 CFLAGS += -fvisibility=hidden
 
-build/test: test/test.cpp test/fixtures/*
-	$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEPS) $(RAPIDJSON_DEP) $< -o $@
+build/test:
+	$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEPS) $(RAPIDJSON_DEP) test/test.cpp -o ./build/test
 
-test: build build/test
+test: mason_packages/headers/geometry build build/test
 	./build/test
 
 format:
