@@ -1,13 +1,13 @@
 #include <mapbox/geojson.hpp>
 #include <mapbox/geometry.hpp>
 
-#include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 
 #include <cassert>
 #include <fstream>
-#include <sstream>
 #include <iostream>
+#include <sstream>
 
 using namespace mapbox::geojson;
 using namespace mapbox::geometry;
@@ -26,7 +26,7 @@ geojson<double> readGeoJSON(const std::string &path, bool use_convert) {
 }
 
 template <class T>
-std::string writeGeoJSON(const T& t, bool use_convert) {
+std::string writeGeoJSON(const T &t, bool use_convert) {
     if (use_convert) {
         rapidjson_allocator allocator;
         rapidjson::StringBuffer buffer;
@@ -188,7 +188,7 @@ static void testFeatureNullProperties(bool use_convert) {
     const auto &f = data.get<feature<double>>();
     assert(f.geometry.is<point<double>>());
     assert(f.properties.size() == 0);
-    
+
     auto out = parse<double>(writeGeoJSON(data, use_convert));
     assert(out == data);
 }
@@ -210,8 +210,8 @@ static void testFeatureID(bool use_convert) {
 
     const auto &features = data.get<feature_collection<double>>();
 
-    assert(features.at(0).id == identifier { 1234 });
-    assert(features.at(1).id == identifier { "abcd" });
+    assert(features.at(0).id == identifier{ 1234 });
+    assert(features.at(1).id == identifier{ "abcd" });
 
     auto out = parse<double>(writeGeoJSON(data, use_convert));
     assert(out == data);
@@ -236,4 +236,3 @@ int main() {
     testAll(false);
     return 0;
 }
-
