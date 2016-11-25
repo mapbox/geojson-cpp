@@ -155,7 +155,7 @@ static void testFeature(bool use_convert) {
     assert(f.properties.at("int").get<std::int64_t>() == -10);
     assert(f.properties.at("int").is<std::int64_t>());
     assert(f.properties.at("null").is<mapbox::geometry::null_value_t>());
-    assert(f.properties.at("null") == nullptr);
+    assert(f.properties.at("null") == mapbox::geometry::null_value_t{});
 
     using prop_map = std::unordered_map<std::string, value>;
     using values   = std::vector<value>;
@@ -200,7 +200,7 @@ static void testFeatureID(bool use_convert) {
 
     const auto &features = data.get<feature_collection>();
 
-    assert(features.at(0).id == identifier { 1234 });
+    assert(features.at(0).id == identifier { uint64_t(1234) });
     assert(features.at(1).id == identifier { "abcd" });
 
     assert(parse(writeGeoJSON(data, use_convert)) == data);

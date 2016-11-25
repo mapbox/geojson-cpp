@@ -107,7 +107,7 @@ template <>
 value convert<value>(const rapidjson_value &json) {
     switch (json.GetType()) {
     case rapidjson::kNullType:
-        return nullptr;
+        return ::mapbox::geometry::null_value_t{};
     case rapidjson::kFalseType:
         return false;
     case rapidjson::kTrueType:
