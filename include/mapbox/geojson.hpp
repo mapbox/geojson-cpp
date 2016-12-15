@@ -46,6 +46,15 @@ template <typename T>
 geojson<T> parse(const std::string &json);
 
 template <typename T>
+geometry::geometry<T> parse_geometry(const char* json);
+template <typename T>
+geometry::feature<T> parse_feature(const char* json);
+template <typename T>
+geometry::feature_collection<T> parse_feature_collection(const char* json);
+template <typename T>
+geojson<T> parse(const char* json);
+
+template <typename T>
 T convert(const rapidjson_value &json);
 
 template <typename T>
@@ -385,29 +394,49 @@ geojson<T> convert_geojson(const rapidjson_value &json) {
 
 template <typename T>
 geometry::geometry<T> parse_geometry(const std::string &json) {
+    return parse_geometry<T>(json.c_str());
+}
+
+template <typename T>
+geometry::geometry<T> parse_geometry(const char* json) {
     rapidjson_document d;
-    d.Parse(json.c_str());
+    d.Parse(json);
     return convert_geometry<T>(d);
 }
 
 template <typename T>
 geometry::feature<T> parse_feature(const std::string &json) {
+    return parse_feature<T>(json.c_str());
+}
+
+template <typename T>
+geometry::feature<T> parse_feature(const char* json) {
     rapidjson_document d;
-    d.Parse(json.c_str());
+    d.Parse(json);
     return convert_feature<T>(d);
 }
 
 template <typename T>
 geometry::feature_collection<T> parse_feature_collection(const std::string &json) {
+    return parse_feature_collection<T>(json.c_str());
+}
+
+template <typename T>
+geometry::feature_collection<T> parse_feature_collection(const char* json) {
     rapidjson_document d;
-    d.Parse(json.c_str());
+    d.Parse(json);
     return convert_feature_collection<T>(d);
 }
 
 template <typename T = double>
 geojson<T> parse(const std::string &json) {
+    return parse<T>(json.c_str());
+}
+
+template <typename T = double>
+geojson<T> parse(const char* json) {
     rapidjson_document d;
-    d.Parse(json.c_str());
+    d.Parse(json);
     return convert_geojson<T>(d);
 }
 
