@@ -206,6 +206,15 @@ static void testFeatureID(bool use_convert) {
     assert(parse(writeGeoJSON(data, use_convert)) == data);
 }
 
+static void testParseErrorHandling() {
+    try {
+        readGeoJSON("test/fixtures/invalid.json", false);
+        assert(false && "Should have thrown an error");
+    } catch (const std::runtime_error& err) {
+        assert(std::string(err.what()).find("Invalid") != std::string::npos);
+    }
+}
+
 void testAll(bool use_convert) {
     testPoint(use_convert);
     testMultiPoint(use_convert);
@@ -221,6 +230,7 @@ void testAll(bool use_convert) {
 }
 
 int main() {
+    testParseErrorHandling();
     testAll(true);
     testAll(false);
     return 0;

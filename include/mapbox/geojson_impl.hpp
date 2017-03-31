@@ -6,6 +6,9 @@
 #include <rapidjson/document.h>
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
+#include <rapidjson/error/en.h>
+
+#include <sstream>
 
 namespace mapbox {
 namespace geojson {
@@ -227,6 +230,11 @@ template <class T>
 T parse(const std::string &json) {
     rapidjson_document d;
     d.Parse(json.c_str());
+    if (d.HasParseError()) {
+        std::stringstream message;
+        message << d.GetErrorOffset() << " - " << rapidjson::GetParseError_En(d.GetParseError());
+        throw error(message.str());
+    }
     return convert<T>(d);
 }
 
