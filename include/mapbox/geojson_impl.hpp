@@ -173,13 +173,11 @@ feature convert<feature>(const rapidjson_value &json) {
     }
 
     auto const &prop_itr = json.FindMember("properties");
-
-    if (prop_itr == json_end)
-        throw error("Feature must have a properties property");
-
-    const auto &json_props = prop_itr->value;
-    if (!json_props.IsNull()) {
-        result.properties = convert<prop_map>(json_props);
+    if (prop_itr != json_end) {
+        const auto &json_props = prop_itr->value;
+        if (!json_props.IsNull()) {
+            result.properties = convert<prop_map>(json_props);
+        }
     }
 
     return result;

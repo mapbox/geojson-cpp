@@ -184,6 +184,17 @@ static void testFeatureNullProperties(bool use_convert) {
     assert(parse(writeGeoJSON(data, use_convert)) == data);
 }
 
+static void testFeatureMissingProperties(bool use_convert) {
+    const auto &data = readGeoJSON("test/fixtures/feature-missing-properties.json", use_convert);
+    assert(data.is<feature>());
+
+    const auto &f = data.get<feature>();
+    assert(f.geometry.is<point>());
+    assert(f.properties.size() == 0);
+
+    assert(parse(writeGeoJSON(data, use_convert)) == data);
+}
+
 static void testFeatureCollection(bool use_convert) {
     const auto &data = readGeoJSON("test/fixtures/feature-collection.json", use_convert);
     assert(data.is<feature_collection>());
@@ -225,6 +236,7 @@ void testAll(bool use_convert) {
     testGeometryCollection(use_convert);
     testFeature(use_convert);
     testFeatureNullProperties(use_convert);
+    testFeatureMissingProperties(use_convert);
     testFeatureCollection(use_convert);
     testFeatureID(use_convert);
 }
