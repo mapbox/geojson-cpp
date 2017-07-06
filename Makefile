@@ -2,7 +2,7 @@ CXXFLAGS += -I include -std=c++14 -Wall -Wextra -Wshadow -Werror -O3 -fPIC
 
 MASON ?= .mason/mason
 VARIANT = variant 1.1.4
-GEOMETRY = geometry 0.9.0
+GEOMETRY = geometry 0.9.2
 RAPIDJSON = rapidjson 1.1.0
 
 DEPS = `$(MASON) cflags $(VARIANT)` `$(MASON) cflags $(GEOMETRY)`
