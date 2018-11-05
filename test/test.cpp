@@ -154,8 +154,8 @@ static void testFeature(bool use_convert) {
     assert(f.properties.at("uint").is<std::uint64_t>());
     assert(f.properties.at("int").get<std::int64_t>() == -10);
     assert(f.properties.at("int").is<std::int64_t>());
-    assert(f.properties.at("null").is<mapbox::geometry::null_value_t>());
-    assert(f.properties.at("null") == mapbox::geometry::null_value_t{});
+    assert(f.properties.at("null").is<mapbox::feature::null_value_t>());
+    assert(f.properties.at("null") == mapbox::feature::null_value_t{});
 
     using prop_map = std::unordered_map<std::string, value>;
     using values   = std::vector<value>;
