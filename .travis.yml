@@ -16,19 +16,19 @@ matrix:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-5' ]
     - os: linux
-      env: CXX=clang++-3.8
+      env: CXX=clang++-3.9
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
-          packages: [ libstdc++-5-dev', 'libstdc++6', 'g++-5' ]
+          packages: [ 'libstdc++-5-dev' ]
 
 cache: apt
 
 install:
   - |
     if [[ ${CXX} =~ "clang" ]] && [[ $(uname -s) == "Linux" ]]; then
-      ./.mason/mason install clang 3.8.0
-      CLANG_PREFIX=$(./.mason/mason prefix clang 3.8.0)
+      ./.mason/mason install clang++ 3.9.1
+      CLANG_PREFIX=$(./.mason/mason prefix clang++ 3.9.1)
       export PATH=${CLANG_PREFIX}/bin:${PATH}
       which clang++
       clang++ -v
