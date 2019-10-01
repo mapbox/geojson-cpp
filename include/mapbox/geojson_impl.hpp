@@ -180,6 +180,24 @@ feature convert<feature>(const rapidjson_value &json) {
         }
     }
 
+    auto const &src_itr = json.FindMember("source");
+    if (src_itr != json_end) {
+        result.source = src_itr->value.GetString();
+    }
+
+    auto const &srcLayer_itr = json.FindMember("sourceLayer");
+    if (srcLayer_itr != json_end) {
+        result.sourceLayer = srcLayer_itr->value.GetString();
+    }
+
+    auto const &state_itr = json.FindMember("state");
+    if (state_itr != json_end) {
+        const auto &json_state = state_itr->value;
+        if (!json_state.IsNull()) {
+            result.state = convert<prop_map>(json_state);
+        }
+    }
+
     return result;
 }
 
@@ -414,6 +432,12 @@ rapidjson_value convert<feature>(const feature& element, rapidjson_allocator& al
 
     result.AddMember("geometry", convert(element.geometry, allocator), allocator);
     result.AddMember("properties", to_value { allocator }(element.properties), allocator);
+
+    result.AddMember("source", element.source, allocator);
+    if (!element.sourceLayer.empty()) {
+        result.AddMember("sourceLayer", element.sourceLayer, allocator);
+    }
+    result.AddMember("state", to_value { allocator }(element.state), allocator);
 
     return result;
 }
