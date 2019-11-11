@@ -163,14 +163,40 @@ static void testFeature(bool use_convert) {
     const auto &nested = f.properties.at("nested");
 
     // Explicit recursive_wrapper as a workaround for https://github.com/mapbox/variant/issues/102
-    assert(nested.is<mapbox::util::recursive_wrapper<values>>());
-    assert(nested.get<values>().at(0).is<std::uint64_t>());
-    assert(nested.get<values>().at(0).get<std::uint64_t>() == 5);
-    assert(nested.get<values>().at(1).is<mapbox::util::recursive_wrapper<prop_map>>());
-    assert(nested.get<values>().at(1).get<prop_map>().at("foo").is<std::string>());
-    assert(nested.get<values>().at(1).get<prop_map>().at("foo").get<std::string>() == "bar");
+    assert(nested.is<mapbox::util::recursive_wrapper<std::shared_ptr<values>>>());
+    assert(nested.get<std::shared_ptr<values>>()->at(0).is<std::uint64_t>());
+    assert(nested.get<std::shared_ptr<values>>()->at(0).get<std::uint64_t>() == 5);
+    assert(nested.get<std::shared_ptr<values>>()->at(1).is<mapbox::util::recursive_wrapper<std::shared_ptr<prop_map>>>());
+    assert(nested.get<std::shared_ptr<values>>()->at(1).get<std::shared_ptr<prop_map>>()->at("foo").is<std::string>());
+    assert(nested.get<std::shared_ptr<values>>()->at(1).get<std::shared_ptr<prop_map>>()->at("foo").get<std::string>() == "bar");
 
-    assert(parse(writeGeoJSON(data, use_convert)) == data);
+    const auto &data2 = parse(writeGeoJSON(data, use_convert));
+    assert(data2.is<feature>());
+    const auto &f2 = data.get<feature>();
+    assert(f2.geometry == f.geometry);
+    assert(f2.id == f.id);
+    assert(f2.properties.at("bool").is<bool>());
+    assert(f2.properties.at("bool") == true);
+    assert(f2.properties.at("string").is<std::string>());
+    assert(f2.properties.at("string").get<std::string>() == "foo");
+    assert(f2.properties.at("double") == 2.5);
+    assert(f2.properties.at("double").is<double>());
+    assert(f2.properties.at("uint").get<std::uint64_t>() == 10);
+    assert(f2.properties.at("uint").is<std::uint64_t>());
+    assert(f2.properties.at("int").get<std::int64_t>() == -10);
+    assert(f2.properties.at("int").is<std::int64_t>());
+    assert(f2.properties.at("null").is<mapbox::feature::null_value_t>());
+    assert(f2.properties.at("null") == mapbox::feature::null_value_t{});
+
+    const auto &nested2 = f2.properties.at("nested");
+
+    // Explicit recursive_wrapper as a workaround for https://github.com/mapbox/variant/issues/102
+    assert(nested2.is<mapbox::util::recursive_wrapper<std::shared_ptr<values>>>());
+    assert(nested2.get<std::shared_ptr<values>>()->at(0).is<std::uint64_t>());
+    assert(nested2.get<std::shared_ptr<values>>()->at(0).get<std::uint64_t>() == 5);
+    assert(nested2.get<std::shared_ptr<values>>()->at(1).is<mapbox::util::recursive_wrapper<std::shared_ptr<prop_map>>>());
+    assert(nested2.get<std::shared_ptr<values>>()->at(1).get<std::shared_ptr<prop_map>>()->at("foo").is<std::string>());
+    assert(nested2.get<std::shared_ptr<values>>()->at(1).get<std::shared_ptr<prop_map>>()->at("foo").get<std::string>() == "bar");
 }
 
 static void testFeatureNullProperties(bool use_convert) {

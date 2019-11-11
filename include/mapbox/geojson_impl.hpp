@@ -107,6 +107,31 @@ prop_map convert(const rapidjson_value &json) {
 }
 
 template <>
+std::shared_ptr<prop_map> convert(const rapidjson_value &json) {
+    if (!json.IsObject())
+        throw error("properties must be an object");
+
+    std::shared_ptr<prop_map> result = std::make_shared<prop_map>();
+    for (auto &member : json.GetObject()) {
+        result->emplace(std::string(member.name.GetString(), member.name.GetStringLength()),
+                       convert<value>(member.value));
+    }
+    return result;
+}
+
+template <>
+std::shared_ptr<std::vector<value>> convert(const rapidjson_value &json) {
+    std::shared_ptr<std::vector<value>> points = std::make_shared<std::vector<value>>();
+    auto size = json.Size();
+    points->reserve(size);
+
+    for (auto &element : json.GetArray()) {
+        points->push_back(convert<value>(element));
+    }
+    return points;
+}
+
+template <>
 value convert<value>(const rapidjson_value &json) {
     switch (json.GetType()) {
     case rapidjson::kNullType:
@@ -116,9 +141,9 @@ value convert<value>(const rapidjson_value &json) {
     case rapidjson::kTrueType:
         return true;
     case rapidjson::kObjectType:
-        return convert<prop_map>(json);
+        return convert<std::shared_ptr<prop_map>>(json);
     case rapidjson::kArrayType:
-        return convert<std::vector<value>>(json);
+        return convert<std::shared_ptr<std::vector<value>>>(json);
     case rapidjson::kStringType:
         return std::string(json.GetString(), json.GetStringLength());
     default:
@@ -374,6 +399,36 @@ struct to_value {
         rapidjson_value result;
         result.SetObject();
         for (const auto& property : map) {
+            result.AddMember(
+                rapidjson::GenericStringRef<char> {
+                    property.first.data(),
+                    rapidjson::SizeType(property.first.size())
+                },
+                value::visit(property.second, *this),
+                allocator);
+        }
+        return result;
+    }
+
+    rapidjson_value operator()(const std::shared_ptr<std::vector<value>>& array) {
+        rapidjson_value result;
+        result.SetArray();
+        if (!array) {
+            return result;
+        }
+        for (const auto& item : *array) {
+            result.PushBack(value::visit(item, *this), allocator);
+        }
+        return result;
+    }
+
+    rapidjson_value operator()(const std::shared_ptr<std::unordered_map<std::string, value>>& map) {
+        rapidjson_value result;
+        result.SetObject();
+        if (!map) {
+            return result;
+        }
+        for (const auto& property : *map) {
             result.AddMember(
                 rapidjson::GenericStringRef<char> {
                     property.first.data(),
