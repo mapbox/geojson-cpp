@@ -12,6 +12,7 @@
 
 using namespace mapbox::geojson;
 
+template <typename T = geojson>
 geojson readGeoJSON(const std::string &path, bool use_convert) {
     std::ifstream t(path.c_str());
     std::stringstream buffer;
@@ -19,7 +20,7 @@ geojson readGeoJSON(const std::string &path, bool use_convert) {
     if (use_convert) {
         rapidjson_document d;
         d.Parse<0>(buffer.str().c_str());
-        return convert(d);
+        return convert<T>(d);
     } else {
         return parse(buffer.str());
     }
@@ -38,8 +39,18 @@ std::string writeGeoJSON(const T& t, bool use_convert) {
     }
 }
 
+static void testEmpty() {
+    const auto data = readGeoJSON<geometry>("test/fixtures/null.json", true);
+    assert(data.is<geometry>());
+
+    const auto &geom = data.get<geometry>();
+    assert(geom.is<empty>());
+
+    assert(writeGeoJSON(geom, true) == "null");
+}
+
 static void testPoint(bool use_convert) {
-    const auto &data = readGeoJSON("test/fixtures/point.json", use_convert);
+    const auto data = readGeoJSON("test/fixtures/point.json", use_convert);
     assert(data.is<geometry>());
 
     const auto &geom = data.get<geometry>();
@@ -53,7 +64,7 @@ static void testPoint(bool use_convert) {
 }
 
 static void testMultiPoint(bool use_convert) {
-    const auto &data = readGeoJSON("test/fixtures/multi-point.json", use_convert);
+    const auto data = readGeoJSON("test/fixtures/multi-point.json", use_convert);
     assert(data.is<geometry>());
 
     const auto &geom = data.get<geometry>();
@@ -66,7 +77,7 @@ static void testMultiPoint(bool use_convert) {
 }
 
 static void testLineString(bool use_convert) {
-    const auto &data = readGeoJSON("test/fixtures/line-string.json", use_convert);
+    const auto data = readGeoJSON("test/fixtures/line-string.json", use_convert);
     assert(data.is<geometry>());
 
     const auto &geom = data.get<geometry>();
@@ -79,7 +90,7 @@ static void testLineString(bool use_convert) {
 }
 
 static void testMultiLineString(bool use_convert) {
-    const auto &data = readGeoJSON("test/fixtures/multi-line-string.json", use_convert);
+    const auto data = readGeoJSON("test/fixtures/multi-line-string.json", use_convert);
     assert(data.is<geometry>());
 
     const auto &geom = data.get<geometry>();
@@ -93,7 +104,7 @@ static void testMultiLineString(bool use_convert) {
 }
 
 static void testPolygon(bool use_convert) {
-    const auto &data = readGeoJSON("test/fixtures/polygon.json", use_convert);
+    const auto data = readGeoJSON("test/fixtures/polygon.json", use_convert);
     assert(data.is<geometry>());
 
     const auto &geom = data.get<geometry>();
@@ -108,7 +119,7 @@ static void testPolygon(bool use_convert) {
 }
 
 static void testMultiPolygon(bool use_convert) {
-    const auto &data = readGeoJSON("test/fixtures/multi-polygon.json", use_convert);
+    const auto data = readGeoJSON("test/fixtures/multi-polygon.json", use_convert);
     assert(data.is<geometry>());
 
     const auto &geom = data.get<geometry>();
@@ -124,7 +135,7 @@ static void testMultiPolygon(bool use_convert) {
 }
 
 static void testGeometryCollection(bool use_convert) {
-    const auto &data = readGeoJSON("test/fixtures/geometry-collection.json", use_convert);
+    const auto data = readGeoJSON("test/fixtures/geometry-collection.json", use_convert);
     assert(data.is<geometry>());
 
     const auto &geom = data.get<geometry>();
@@ -138,7 +149,7 @@ static void testGeometryCollection(bool use_convert) {
 }
 
 static void testFeature(bool use_convert) {
-    const auto &data = readGeoJSON("test/fixtures/feature.json", use_convert);
+    const auto data = readGeoJSON("test/fixtures/feature.json", use_convert);
     assert(data.is<feature>());
 
     const auto &f = data.get<feature>();
@@ -174,7 +185,7 @@ static void testFeature(bool use_convert) {
 }
 
 static void testFeatureNullProperties(bool use_convert) {
-    const auto &data = readGeoJSON("test/fixtures/feature-null-properties.json", use_convert);
+    const auto data = readGeoJSON("test/fixtures/feature-null-properties.json", use_convert);
     assert(data.is<feature>());
 
     const auto &f = data.get<feature>();
@@ -184,8 +195,20 @@ static void testFeatureNullProperties(bool use_convert) {
     assert(parse(writeGeoJSON(data, use_convert)) == data);
 }
 
+
+static void testFeatureNullGeometry(bool use_convert) {
+    const auto data = readGeoJSON("test/fixtures/feature-null-geometry.json", use_convert);
+    assert(data.is<feature>());
+
+    const auto &f = data.get<feature>();
+    assert(f.geometry.is<empty>());
+    assert(f.properties.size() == 0);
+
+    assert(parse(writeGeoJSON(data, use_convert)) == data);
+}
+
 static void testFeatureMissingProperties(bool use_convert) {
-    const auto &data = readGeoJSON("test/fixtures/feature-missing-properties.json", use_convert);
+    const auto data = readGeoJSON("test/fixtures/feature-missing-properties.json", use_convert);
     assert(data.is<feature>());
 
     const auto &f = data.get<feature>();
@@ -196,7 +219,7 @@ static void testFeatureMissingProperties(bool use_convert) {
 }
 
 static void testFeatureCollection(bool use_convert) {
-    const auto &data = readGeoJSON("test/fixtures/feature-collection.json", use_convert);
+    const auto data = readGeoJSON("test/fixtures/feature-collection.json", use_convert);
     assert(data.is<feature_collection>());
 
     const auto &features = data.get<feature_collection>();
@@ -206,7 +229,7 @@ static void testFeatureCollection(bool use_convert) {
 }
 
 static void testFeatureID(bool use_convert) {
-    const auto &data = readGeoJSON("test/fixtures/feature-id.json", use_convert);
+    const auto data = readGeoJSON("test/fixtures/feature-id.json", use_convert);
     assert(data.is<feature_collection>());
 
     const auto &features = data.get<feature_collection>();
@@ -236,6 +259,7 @@ void testAll(bool use_convert) {
     testGeometryCollection(use_convert);
     testFeature(use_convert);
     testFeatureNullProperties(use_convert);
+    testFeatureNullGeometry(use_convert);
     testFeatureMissingProperties(use_convert);
     testFeatureCollection(use_convert);
     testFeatureID(use_convert);
@@ -243,6 +267,7 @@ void testAll(bool use_convert) {
 
 int main() {
     testParseErrorHandling();
+    testEmpty();
     testAll(true);
     testAll(false);
     return 0;

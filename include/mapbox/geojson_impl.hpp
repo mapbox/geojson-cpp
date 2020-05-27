@@ -41,6 +41,9 @@ Cont convert(const rapidjson_value &json) {
 
 template <>
 geometry convert<geometry>(const rapidjson_value &json) {
+    if (json.IsNull())
+        return empty{};
+
     if (!json.IsObject())
         throw error("Geometry must be an object");
 
@@ -263,7 +266,7 @@ rapidjson_value convert<feature_collection>(const feature_collection&, rapidjson
 struct to_type {
 public:
     const char * operator()(const empty&) {
-        return "Empty";
+        abort();
     }
 
     const char * operator()(const point&) {
@@ -315,6 +318,10 @@ struct to_coordinates_or_geometries {
         result.PushBack(element.x, allocator);
         result.PushBack(element.y, allocator);
         return result;
+    }
+
+    rapidjson_value operator()(const empty&) {
+        abort();
     }
 
     rapidjson_value operator()(const geometry& element) {
@@ -388,6 +395,9 @@ struct to_value {
 
 template <>
 rapidjson_value convert<geometry>(const geometry& element, rapidjson_allocator& allocator) {
+    if (element.is<empty>())
+        return rapidjson_value(rapidjson::kNullType);
+
     rapidjson_value result(rapidjson::kObjectType);
 
     result.AddMember(
