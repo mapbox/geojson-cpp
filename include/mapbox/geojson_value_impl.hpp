@@ -6,6 +6,8 @@
 namespace mapbox {
 namespace geojson {
 
+using error = std::runtime_error;
+
 namespace {
 
 double getDouble(const value& numVal) {
@@ -18,8 +20,6 @@ double getDouble(const value& numVal) {
 }
 
 } // namespace
-
-using error = std::runtime_error;
 
 template <typename T>
 T convert(const value &);
