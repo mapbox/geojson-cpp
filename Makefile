@@ -2,7 +2,7 @@ CXXFLAGS += -I include -std=c++14 -Wall -Wextra -Wshadow -Werror -O3 -fPIC
 
 MASON ?= .mason/mason
 VARIANT = variant 1.1.4
-GEOMETRY = geometry 1.0.0
+GEOMETRY = geometry 1.1.0
 RAPIDJSON = rapidjson 1.1.0
 
 DEPS = `$(MASON) cflags $(VARIANT)` `$(MASON) cflags $(GEOMETRY)`
@@ -20,7 +20,7 @@ build:
 
 CFLAGS += -fvisibility=hidden
 
-build/geojson.o: src/mapbox/geojson.cpp include/mapbox/geojson.hpp include/mapbox/geojson_impl.hpp build mason_packages/headers/geometry Makefile
+build/geojson.o: src/mapbox/geojson.cpp include/mapbox/geojson.hpp include/mapbox/geojson_impl.hpp include/mapbox/geojson_value_impl.hpp build mason_packages/headers/geometry Makefile
 	$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEPS) $(RAPIDJSON_DEP) -c $< -o $@
 
 build/libgeojson.a: build/geojson.o
@@ -29,8 +29,12 @@ build/libgeojson.a: build/geojson.o
 build/test: test/test.cpp test/fixtures/* build/libgeojson.a
 	$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEPS) $(RAPIDJSON_DEP) $< -Lbuild -lgeojson -o $@
 
-test: build/test
+build/test_value: test/test_value.cpp test/fixtures/* build/libgeojson.a
+	$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEPS) $(RAPIDJSON_DEP) $< -Lbuild -lgeojson -o $@
+
+test: build/test build/test_value
 	./build/test
+	./build/test_value
 
 format:
 	clang-format include/mapbox/*.hpp src/mapbox/geojson.cpp test/*.cpp -i
