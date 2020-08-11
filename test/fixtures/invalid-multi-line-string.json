@@ -2,9 +2,10 @@
     "type": "Feature",
     "properties": {},
     "geometry": {
-        "type": "MultiPolygon",
+        "type": "MultiLineString",
         "coordinates": [
-            [-91.021728515625, 41.393294288784865]
+            [[30, 40], [40, 40]],
+            [[20, 40]]
         ]
     }
 }
