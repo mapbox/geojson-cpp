@@ -17,7 +17,7 @@ using error    = std::runtime_error;
 using prop_map = std::unordered_map<std::string, value>;
 
 void validatePolygon(const rapidjson_value &json) {
-    // this check is required incase case of mulipolygon validation
+    // this check is required incase case of multipolygon validation
     if (!json.IsArray()) {
         throw error("Coordinates must be nested more deeply.");
     }
@@ -26,7 +26,9 @@ void validatePolygon(const rapidjson_value &json) {
             throw error("Coordinates must be an array of arrays, each describing a polygon.");
         }
         if (element.Size() < 4){
-            throw error("Polygon must be described by 4 or more coordinate points.");
+            throw error("Polygon must be described by 4 or more coordinate points. Improper "
+                        "nesting can also lead to this error. Double check that the coordinates "
+                        "are properly nested and there are 4 or more coordinates.");
         }
     }
 }
