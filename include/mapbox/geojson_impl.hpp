@@ -16,11 +16,35 @@ namespace geojson {
 using error    = std::runtime_error;
 using prop_map = std::unordered_map<std::string, value>;
 
+void validatePolygon(const rapidjson_value &json) {
+    // this check is required incase case of mulipolygon validation
+    if (!json.IsArray()) {
+        throw error("Coordinates must be nested more deeply.");
+    }
+    for (auto &element : json.GetArray()) {
+        if (!element.IsArray()) {
+            throw error("Coordinates must be an array of arrays, each describing a polygon.");
+        }
+        if (element.Size() < 4){
+            throw error("Polygon must be described by 4 or more coordinate points.");
+        }
+    }
+}
+
+void validateLineString(const rapidjson_value &json) {
+    if (json.GetArray().Size() < 2) {
+        throw error("A line string must have two or more coordinate points.");
+    }
+}
+
 template <typename T>
 T convert(const rapidjson_value &json);
 
 template <>
 point convert<point>(const rapidjson_value &json) {
+    if (!json.IsArray()) {
+        throw error("coordinates must be an array.");
+    }
     if (json.Size() < 2)
         throw error("coordinates array must have at least 2 numbers");
 
@@ -30,6 +54,10 @@ point convert<point>(const rapidjson_value &json) {
 template <typename Cont>
 Cont convert(const rapidjson_value &json) {
     Cont points;
+    if (!json.IsArray()) {
+        throw error("coordinates must be an array of points describing linestring or an array of "
+                    "arrays describing polygons and line strings.");
+    }
     auto size = json.Size();
     points.reserve(size);
 
@@ -81,15 +109,26 @@ geometry convert<geometry>(const rapidjson_value &json) {
         return geometry{ convert<point>(json_coords) };
     if (type == "MultiPoint")
         return geometry{ convert<multi_point>(json_coords) };
-    if (type == "LineString")
+    if (type == "LineString") {
+        validateLineString(json_coords);
         return geometry{ convert<line_string>(json_coords) };
-    if (type == "MultiLineString")
+    }
+    if (type == "MultiLineString") {
+        for (auto &element : json_coords.GetArray()) {
+            validateLineString(element);
+        }
         return geometry{ convert<multi_line_string>(json_coords) };
-    if (type == "Polygon")
+    }
+    if (type == "Polygon") {
+        validatePolygon(json_coords);
         return geometry{ convert<polygon>(json_coords) };
-    if (type == "MultiPolygon")
+    }
+    if (type == "MultiPolygon") {
+        for (auto &element: json_coords.GetArray()) {
+            validatePolygon(element);
+        }
         return geometry{ convert<multi_polygon>(json_coords) };
-
+    }
     throw error(std::string(type.GetString()) + " not yet implemented");
 }
 

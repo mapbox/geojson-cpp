@@ -247,6 +247,49 @@ static void testParseErrorHandling() {
     } catch (const std::runtime_error& err) {
         assert(std::string(err.what()).find("Invalid") != std::string::npos);
     }
+
+    // test invalid polygon
+    try {
+        readGeoJSON("test/fixtures/invalid-polygon.json", false);
+        assert(false && "Should have thrown an error");
+    } catch (const std::runtime_error& err) {
+        assert(std::string(err.what()).find("described by 4") != std::string::npos);
+    }
+
+    try {
+        readGeoJSON("test/fixtures/invalid-polygon-2.json", false);
+        assert(false && "Should have thrown an error");
+    } catch (const std::runtime_error& err) {
+        assert(std::string(err.what()).find("array") != std::string::npos);
+    }
+
+    try {
+        readGeoJSON("test/fixtures/invalid-multi-polygon.json", false);
+        assert(false && "Should have thrown an error");
+    } catch (const std::runtime_error& err) {
+        assert(std::string(err.what()).find("described by 4") != std::string::npos);
+    }
+
+    try {
+        readGeoJSON("test/fixtures/invalid-multi-polygon-2.json", false);
+        assert(false && "Should have thrown an error");
+    } catch (const std::runtime_error& err) {
+        assert(std::string(err.what()).find("2 numbers") != std::string::npos);
+    }
+
+    try {
+        readGeoJSON("test/fixtures/invalid-line-string.json", false);
+        assert(false && "Should have thrown an error");
+    } catch (const std::runtime_error& err) {
+        assert(std::string(err.what()).find("two or more") != std::string::npos);
+    }
+
+    try {
+        readGeoJSON("test/fixtures/invalid-multi-line-string.json", false);
+        assert(false && "Should have thrown an error");
+    } catch (const std::runtime_error& err) {
+        assert(std::string(err.what()).find("two or more") != std::string::npos);
+    }
 }
 
 void testAll(bool use_convert) {
