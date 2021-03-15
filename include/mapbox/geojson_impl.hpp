@@ -10,6 +10,14 @@
 
 #include <sstream>
 
+#ifndef MAPBOX_GEOJSON_VISIBILITY
+#define MAPBOX_GEOJSON_VISIBILITY
+#endif
+
+#ifndef MAPBOX_GEOJSON_RAPIDJSON_VISIBILITY
+#define MAPBOX_GEOJSON_RAPIDJSON_VISIBILITY MAPBOX_GEOJSON_VISIBILITY
+#endif
+
 namespace mapbox {
 namespace geojson {
 
@@ -70,7 +78,7 @@ Cont convert(const rapidjson_value &json) {
 }
 
 template <>
-geometry convert<geometry>(const rapidjson_value &json) {
+MAPBOX_GEOJSON_RAPIDJSON_VISIBILITY geometry convert<geometry>(const rapidjson_value &json) {
     if (json.IsNull())
         return empty{};
 
@@ -192,7 +200,7 @@ identifier convert<identifier>(const rapidjson_value &json) {
 }
 
 template <>
-feature convert<feature>(const rapidjson_value &json) {
+MAPBOX_GEOJSON_RAPIDJSON_VISIBILITY feature convert<feature>(const rapidjson_value &json) {
     if (!json.IsObject())
         throw error("Feature must be an object");
 
@@ -228,7 +236,7 @@ feature convert<feature>(const rapidjson_value &json) {
 }
 
 template <>
-geojson convert<geojson>(const rapidjson_value &json) {
+MAPBOX_GEOJSON_RAPIDJSON_VISIBILITY geojson convert<geojson>(const rapidjson_value &json) {
     if (!json.IsObject())
         throw error("GeoJSON must be an object");
 
@@ -268,6 +276,8 @@ geojson convert<geojson>(const rapidjson_value &json) {
     return geojson{ convert<geometry>(json) };
 }
 
+template MAPBOX_GEOJSON_RAPIDJSON_VISIBILITY feature_collection convert<feature_collection>(const rapidjson_value &);
+
 template <class T>
 T parse(const std::string &json) {
     rapidjson_document d;
@@ -280,18 +290,18 @@ T parse(const std::string &json) {
     return convert<T>(d);
 }
 
-template <>
-geometry parse<geometry>(const std::string &);
-template <>
-feature parse<feature>(const std::string &);
-template <>
-feature_collection parse<feature_collection>(const std::string &);
+// Instantiate the template.
+template MAPBOX_GEOJSON_VISIBILITY geojson parse<geojson>(const std::string &);
+template MAPBOX_GEOJSON_VISIBILITY geometry parse<geometry>(const std::string &);
+template MAPBOX_GEOJSON_VISIBILITY feature parse<feature>(const std::string &);
+template MAPBOX_GEOJSON_VISIBILITY feature_collection parse<feature_collection>(const std::string &);
 
-geojson parse(const std::string &json) {
+// Specialized implementation for geojson.
+MAPBOX_GEOJSON_VISIBILITY geojson parse(const std::string &json) {
     return parse<geojson>(json);
 }
 
-geojson convert(const rapidjson_value &json) {
+MAPBOX_GEOJSON_RAPIDJSON_VISIBILITY geojson convert(const rapidjson_value &json) {
     return convert<geojson>(json);
 }
 
@@ -435,7 +445,7 @@ struct to_value {
 };
 
 template <>
-rapidjson_value convert<geometry>(const geometry& element, rapidjson_allocator& allocator) {
+MAPBOX_GEOJSON_RAPIDJSON_VISIBILITY rapidjson_value convert<geometry>(const geometry& element, rapidjson_allocator& allocator) {
     if (element.is<empty>())
         return rapidjson_value(rapidjson::kNullType);
 
@@ -455,7 +465,8 @@ rapidjson_value convert<geometry>(const geometry& element, rapidjson_allocator& 
 }
 
 template <>
-rapidjson_value convert<feature>(const feature& element, rapidjson_allocator& allocator) {
+MAPBOX_GEOJSON_RAPIDJSON_VISIBILITY rapidjson_value convert<feature>(const feature &element,
+                                                                     rapidjson_allocator &allocator) {
     rapidjson_value result(rapidjson::kObjectType);
     result.AddMember("type", "Feature", allocator);
 
@@ -470,7 +481,8 @@ rapidjson_value convert<feature>(const feature& element, rapidjson_allocator& al
 }
 
 template <>
-rapidjson_value convert<feature_collection>(const feature_collection& collection, rapidjson_allocator& allocator) {
+MAPBOX_GEOJSON_RAPIDJSON_VISIBILITY rapidjson_value convert<feature_collection>(const feature_collection &collection,
+                                                                                rapidjson_allocator &allocator) {
     rapidjson_value result(rapidjson::kObjectType);
     result.AddMember("type", "FeatureCollection", allocator);
 
@@ -483,7 +495,12 @@ rapidjson_value convert<feature_collection>(const feature_collection& collection
     return result;
 }
 
-rapidjson_value convert(const geojson& element, rapidjson_allocator& allocator) {
+template <>
+MAPBOX_GEOJSON_RAPIDJSON_VISIBILITY rapidjson_value convert(const geojson &element, rapidjson_allocator &allocator) {
+    return convert(element, allocator);
+}
+
+MAPBOX_GEOJSON_RAPIDJSON_VISIBILITY rapidjson_value convert(const geojson &element, rapidjson_allocator &allocator) {
     return geojson::visit(element, [&] (const auto& alternative) {
         return convert(alternative, allocator);
     });
@@ -498,7 +515,18 @@ std::string stringify(const T& t) {
     return buffer.GetString();
 }
 
-std::string stringify(const geojson& element) {
+// Instantiate the template.
+template MAPBOX_GEOJSON_VISIBILITY std::string stringify<geometry>(const geometry &);
+template MAPBOX_GEOJSON_VISIBILITY std::string stringify<feature>(const feature &);
+template MAPBOX_GEOJSON_VISIBILITY std::string stringify<feature_collection>(const feature_collection &);
+
+// Specialized implementation for geojson.
+template <>
+MAPBOX_GEOJSON_VISIBILITY std::string stringify(const geojson &element) {
+    return stringify(element);
+}
+
+MAPBOX_GEOJSON_VISIBILITY std::string stringify(const geojson &element) {
     return geojson::visit(element, [] (const auto& alternative) {
         return stringify(alternative);
     });

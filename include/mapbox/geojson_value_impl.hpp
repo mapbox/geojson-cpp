@@ -3,6 +3,10 @@
 #include <mapbox/geojson.hpp>
 #include <mapbox/geojson/value.hpp>
 
+#ifndef MAPBOX_GEOJSON_VALUE_VISIBILITY
+#define MAPBOX_GEOJSON_VALUE_VISIBILITY MAPBOX_GEOJSON_VISIBILITY
+#endif
+
 namespace mapbox {
 namespace geojson {
 
@@ -56,7 +60,7 @@ Container convert(const value &val) {
 }
 
 template <>
-geometry convert<geometry>(const value &val) {
+MAPBOX_GEOJSON_VALUE_VISIBILITY geometry convert<geometry>(const value &val) {
     auto *valueObject = val.getObject();
     if (!valueObject) {
         throw error("GeoJSON must be an object");
@@ -115,7 +119,7 @@ geometry convert<geometry>(const value &val) {
 }
 
 template <>
-feature convert<feature>(const value &val) {
+MAPBOX_GEOJSON_VALUE_VISIBILITY feature convert<feature>(const value &val) {
     auto *valueObject = val.getObject();
     if (!valueObject) {
         throw error("GeoJSON must be an object");
@@ -166,7 +170,7 @@ feature convert<feature>(const value &val) {
 }
 
 template <>
-geojson convert<geojson>(const value &val) {
+MAPBOX_GEOJSON_VALUE_VISIBILITY geojson convert<geojson>(const value &val) {
     auto *valueObject = val.getObject();
     if (!valueObject) {
         throw error("GeoJSON must be an object");
@@ -209,7 +213,9 @@ geojson convert<geojson>(const value &val) {
     return geojson{ convert<geometry>(val) };
 }
 
-geojson convert(const value &val) {
+template MAPBOX_GEOJSON_VALUE_VISIBILITY feature_collection convert<feature_collection>(const value &);
+
+MAPBOX_GEOJSON_VALUE_VISIBILITY geojson convert(const value &val) {
     return val.match(
         [](const null_value_t &) -> geojson { return geometry{}; },
         [](const std::string &jsonString) {
@@ -235,7 +241,8 @@ value convert(const Cont &points) {
     return result;
 }
 
-value convert(const geometry &geom) {
+template <>
+MAPBOX_GEOJSON_VALUE_VISIBILITY value convert(const geometry &geom) {
     return geom.match(
         [](const empty &) { return value{}; },
         [](const point &p) {
@@ -269,7 +276,8 @@ value convert(const geometry &geom) {
         });
 }
 
-value convert(const feature &f) {
+template <>
+MAPBOX_GEOJSON_VALUE_VISIBILITY value convert(const feature &f) {
     value::object_type result{
         { "type", "Feature" },
         { "geometry", convert(f.geometry) },
@@ -287,7 +295,8 @@ value convert(const feature &f) {
     return result;
 }
 
-value convert(const feature_collection &collection) {
+template <>
+MAPBOX_GEOJSON_VALUE_VISIBILITY value convert(const feature_collection &collection) {
     value::object_type result{ { "type", "FeatureCollection" } };
     value::array_type features;
     features.reserve(collection.size());
@@ -298,7 +307,12 @@ value convert(const feature_collection &collection) {
     return result;
 }
 
-value convert(const geojson &json) {
+template <>
+MAPBOX_GEOJSON_VALUE_VISIBILITY value convert(const geojson& json) {
+    return convert(json);
+}
+
+MAPBOX_GEOJSON_VALUE_VISIBILITY value convert(const geojson &json) {
     return json.match([](const geometry &g) { return convert(g); },
                       [](const feature &f) { return convert(f); },
                       [](const feature_collection &c) { return convert(c); });
