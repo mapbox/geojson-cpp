@@ -264,6 +264,13 @@ static void testParseErrorHandling() {
     }
 
     try {
+        readGeoJSON("test/fixtures/invalid-polygon-mismatch.json", false);
+        assert(false && "Should have thrown an error");
+    } catch (const std::runtime_error& err) {
+        assert(std::string(err.what()).find("first and last") != std::string::npos);
+    }
+
+    try {
         readGeoJSON("test/fixtures/invalid-multi-polygon.json", false);
         assert(false && "Should have thrown an error");
     } catch (const std::runtime_error& err) {

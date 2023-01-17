@@ -16,6 +16,20 @@ namespace geojson {
 using error    = std::runtime_error;
 using prop_map = std::unordered_map<std::string, value>;
 
+template <typename T>
+T convert(const rapidjson_value &json);
+
+template <>
+point convert<point>(const rapidjson_value &json) {
+    if (!json.IsArray()) {
+        throw error("coordinates must be an array.");
+    }
+    if (json.Size() < 2)
+        throw error("coordinates array must have at least 2 numbers");
+
+    return point{ json[0].GetDouble(), json[1].GetDouble() };
+}
+
 void validatePolygon(const rapidjson_value &json) {
     // this check is required incase case of multipolygon validation
     if (!json.IsArray()) {
@@ -30,6 +44,11 @@ void validatePolygon(const rapidjson_value &json) {
                         "nesting can also lead to this error. Double check that the coordinates "
                         "are properly nested and there are 4 or more coordinates.");
         }
+        const auto &begin = convert<point>(element.GetArray()[0]);
+        const auto &end = convert<point>(element.GetArray()[element.Size()-1]);
+        if (begin.x != end.x || begin.y != end.y) {
+            throw error("The first and last coordinates of polygons should be the same.");
+        }
     }
 }
 
@@ -37,20 +56,6 @@ void validateLineString(const rapidjson_value &json) {
     if (json.GetArray().Size() < 2) {
         throw error("A line string must have two or more coordinate points.");
     }
-}
-
-template <typename T>
-T convert(const rapidjson_value &json);
-
-template <>
-point convert<point>(const rapidjson_value &json) {
-    if (!json.IsArray()) {
-        throw error("coordinates must be an array.");
-    }
-    if (json.Size() < 2)
-        throw error("coordinates array must have at least 2 numbers");
-
-    return point{ json[0].GetDouble(), json[1].GetDouble() };
 }
 
 template <typename Cont>
